@@ -1,0 +1,153 @@
+/* ==============================
+   HEADER
+   ============================== */
+.app-header {
+    width: 100%;
+    height: 60px;
+    background: var(--azul);
+    color: var(--blanco);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+
+    position: fixed;   /* NUEVO */
+    top: 0;            /* NUEVO */
+    left: 0;           /* NUEVO */
+    z-index: 1000;     /* NUEVO: para quedar por encima del menú y el contenido */
+}
+
+/* Botón menú */
+.hamburger {
+    background: none;
+    border: none;
+    font-size: 26px;
+    color: var(--blanco);
+    cursor: pointer;
+}
+
+/* Contenedor derecho */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* "Administrador (ADMIN)" */
+.header-user-label {
+    font-weight: 600;
+}
+
+/* Separador "|" */
+.header-separator {
+    opacity: 0.8;
+}
+
+/* Cerrar sesión */
+.btn-logout {
+    color: var(--blanco);
+    text-decoration: none;
+    font-size: 14px;
+}
+/* Botón hamburguesa */
+.hamburger {
+    background: none;
+    border: none;
+    font-size: 26px;
+    color: var(--blanco);
+    cursor: pointer;
+}
+
+.header-user-info {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.btn-logout {
+    color: var(--blanco);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+
+
+/* ==============================
+   CONTENEDOR PRINCIPAL
+   ============================== */
+.app-container {
+    display: flex;
+    min-height: calc(100vh - 60px);
+    margin-top: 60px;
+}
+
+
+
+/* ==============================
+   SIDEBAR / MENÚ LATERAL
+   ============================== */
+.sidebar {
+    width: 250px;
+    background: var(--gris-claro);
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    position: fixed;
+    top: 60px;
+    left: -260px; /* Oculto por defecto */
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    transition: left 0.3s ease;
+}
+
+.sidebar.open {
+    left: 0;
+}
+
+.sidebar nav ul {
+    list-style: none;
+}
+
+.sidebar nav ul li {
+    margin-bottom: 12px;
+}
+
+.sidebar nav ul li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 15px;
+}
+
+.menu-title {
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+
+/* ==============================
+   ZONA PRINCIPAL
+   ============================== */
+.app-main {
+    flex: 1;
+    margin-left: 0;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar.open ~ .app-main {
+    margin-left: 250px;
+}
+
+
+
+/* ==============================
+   FOOTER
+   ============================== */
+.app-footer {
+    width: 100%;
+    background: var(--gris-claro);
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #555;
+    border-top: 1px solid #ddd;
+}

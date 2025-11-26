@@ -1,0 +1,18 @@
+/* RESET BÁSICO */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* VARIABLES DE COLOR */
+:root {
+    --azul: #0066cc;
+    --blanco: #ffffff;
+    --gris-claro: #f1f1f1;
+}

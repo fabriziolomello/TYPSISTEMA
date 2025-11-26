@@ -1,0 +1,354 @@
+/* ===========================
+   DASHBOARD
+   =========================== */
+
+/* Contenedor general de las secciones del dashboard
+   (si tu main.php ya tiene padding, podés bajar estos valores) */
+.dashboard-header,
+.dashboard-resumen,
+.dashboard-tabla {
+  margin: 0 auto 1.5rem auto;
+  max-width: 1200px;
+}
+
+/* ===========================
+   Sección 1: Cabecera + filtros
+   =========================== */
+
+.dashboard-header__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dashboard-header__top h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Botones genéricos */
+.btn {
+  display: inline-block;
+  padding: 0.45rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+}
+
+.btn-primario {
+  background-color: var(--azul);
+  color: var(--blanco);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primario:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secundario {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.btn-secundario:hover {
+  background-color: #d0d0d0;
+}
+
+/* Filtros */
+
+.dashboard-filtros {
+  background-color: var(--blanco);
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+}
+
+.filtro-grupo label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.filtro-grupo input[type="date"],
+.filtro-grupo input[type="text"],
+.filtro-grupo select {
+  width: 100%;
+  padding: 0.4rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+.filtro-grupo--cliente {
+  grid-column: span 2;
+}
+
+.filtro-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+/* ===========================
+   Sección 2: Cards de resumen
+   =========================== */
+
+.dashboard-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.card-resumen {
+  background-color: var(--blanco);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.card-resumen h2 {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+
+.card-resumen__monto {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+/* Card doble (minorista / mayorista) */
+
+.card-resumen--doble .card-resumen__detalle {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.3rem;
+}
+
+.card-resumen__detalle div span {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.card-resumen__detalle div strong {
+  font-size: 1rem;
+}
+
+/* ===========================
+   Sección 3: Tabla de ventas
+   =========================== */
+
+.dashboard-tabla table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--blanco);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-tabla thead {
+  background-color: var(--azul);
+  color: var(--blanco);
+}
+
+.dashboard-tabla th,
+.dashboard-tabla td {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.dashboard-tabla th {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dashboard-tabla tbody tr:nth-child(even) {
+  background-color: var(--gris-claro);
+}
+
+.dashboard-tabla tbody tr:hover {
+  background-color: #e8f0ff;
+}
+
+.col-monto {
+  text-align: right;
+}
+
+/* Estados con color */
+
+.col-estado {
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.col-estado--pendiente {
+  color: #b88000;
+}
+
+.col-estado--parcial {
+  color: #c0392b;
+}
+
+.col-estado--pagada {
+  color: #1d7a32;
+}
+
+
+/* Estado: ANULADA (idéntico estilo pero en rojo) */
+.col-estado--anulada {
+  color: #b71c1c !important;
+}
+
+/* Acciones */
+
+.col-acciones {
+  white-space: nowrap;
+}
+
+.btn-accion {
+  display: inline-block;
+  padding: 0.25rem 0.45rem;
+  margin-right: 0.15rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--blanco);
+}
+
+.btn-accion--detalle {
+  background-color: var(--azul);
+}
+
+.btn-accion--ticket {
+  background-color: #27ae60;
+}
+
+.btn-accion--anular {
+  background-color: #e74c3c;
+}
+
+.btn-accion:hover {
+  opacity: 0.9;
+}
+
+
+.modal-detalle {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+}
+
+.modal-detalle--visible {
+  display: block;
+}
+
+.modal-detalle__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-detalle__contenido {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 960px;
+  height: 80%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-detalle__cerrar {
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.modal-detalle__cerrar:hover {
+  color: #c00;
+}
+
+#modal-detalle-iframe {
+  border: none;
+  width: 100%;
+  flex: 1;
+}
+
+.modal-cobrar {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 10000;
+}
+
+.modal-cobrar--visible {
+  display: block;
+}
+
+.modal-cobrar__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-cobrar__contenido {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 960px;
+  height: 80%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-cobrar__cerrar {
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.modal-cobrar__cerrar:hover {
+  color: #c00;
+}
+
+#modal-cobrar-iframe {
+  border: none;
+  width: 100%;
+  flex: 1;
+}
+
