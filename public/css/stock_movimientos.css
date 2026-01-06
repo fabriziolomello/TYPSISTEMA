@@ -1,0 +1,81 @@
+/* =========================
+   INGRESO / EGRESO STOCK
+   ========================= */
+
+/* Título */
+h1 {
+  margin-bottom: 16px;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Mensajes */
+p {
+  margin: 8px 0;
+}
+
+/* Filtros */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+label {
+  font-weight: 600;
+}
+
+select,
+input[type="date"] {
+  padding: 6px 8px;
+}
+
+/* Tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #f4f4f4;
+}
+
+/* Diferenciar ingreso / egreso */
+td:nth-child(2) {
+  font-weight: 600;
+}
+
+td:nth-child(2):contains("INGRESO"),
+td:nth-child(2):contains("AJUSTE_POSITIVO") {
+  color: #0a7a28;
+}
+
+td:nth-child(2):contains("AJUSTE_NEGATIVO") {
+  color: #b00020;
+}
+
+/* Form nuevo movimiento */
+textarea {
+  resize: vertical;
+}
+
+button {
+  padding: 8px 14px;
+  cursor: pointer;
+}

@@ -15,92 +15,247 @@ function formatoPrecio(valor) {
 // =========================
 // Estado en memoria
 // =========================
-const cart = new Map(); // id -> { id, name, price, qty }
-let totalVenta = 0;
+// cart: idVariante -> { idVariante, idProducto, name, price, qty, discountPct }
+const cart = new Map();
+let totalVenta = 0; // total final con todos los descuentos
 let listaPreciosActual = "MINORISTA"; // MINORISTA o MAYORISTA
+let descuentoGlobalPct = 0;
+let descuentoGlobalMonto = 0;
 
 // =========================
 // Manejo del carrito
 // =========================
 function agregarAlCarritoDesdeCard(card) {
-    const id = card.dataset.id;
-    const name = card.dataset.name;
-    const price = Number(card.dataset.price);
+    const idVariante = card.dataset.idVariante;
+    const idProducto = card.dataset.idProducto;
+    const name       = card.dataset.name;
+    const price      = Number(card.dataset.price);
 
-    if (!id || !name || isNaN(price)) return;
+    if (!idVariante || !idProducto || !name || isNaN(price)) return;
 
-    const item = cart.get(id) || { id, name, price, qty: 0 };
-    item.price = price;
-    item.qty += 1;
-    cart.set(id, item);
+    const existing = cart.get(idVariante) || {
+        idVariante,
+        idProducto,
+        name,
+        price,
+        qty: 0,
+        discountPct: 0,
+    };
 
+    existing.price = price; // precio actual según lista
+    existing.qty   += 1;
+
+    cart.set(idVariante, existing);
     renderCarrito();
 }
 
-function cambiarCantidadCarrito(id, delta) {
-    const item = cart.get(id);
+function eliminarDelCarrito(idVariante) {
+    if (!cart.has(idVariante)) return;
+    cart.delete(idVariante);
+    renderCarrito();
+}
+
+/**
+ * Recalcula los totales generales (neto, descuentos, subtotal, botón vender)
+ * sin tocar las filas del carrito (no re-renderiza inputs).
+ */
+function recalcularTotalesGlobales() {
+    const totalItemsEl    = document.getElementById("pos-total-items");
+    const netoEl          = document.getElementById("pos-neto");
+    const descuentoEl     = document.getElementById("pos-descuento");
+    const subtotalEl      = document.getElementById("pos-subtotal");
+    const sellTotalEl     = document.getElementById("pos-sell-total");
+    const sellBtn         = document.getElementById("pos-open-payment");
+    const pctInput        = document.getElementById("pos-desc-global-pct");
+    const montoInput      = document.getElementById("pos-desc-global-monto");
+
+    let totalItems = 0;
+    let netoBase = 0;             // suma sin ningún descuento
+    let totalConDescLineas = 0;   // suma con descuentos por ítem
+
+    cart.forEach((item) => {
+        const qty = Number(item.qty) || 0;
+        const price = Number(item.price) || 0;
+        const discount = Number(item.discountPct) || 0;
+
+        const lineNeto = price * qty;
+        const factorDescLinea = 1 - discount / 100;
+        const lineConDesc = lineNeto * factorDescLinea;
+
+        totalItems += qty;
+        netoBase += lineNeto;
+        totalConDescLineas += lineConDesc;
+    });
+
+    // --------- Descuento global ----------
+    let pctVal = descuentoGlobalPct;
+    let montoVal = descuentoGlobalMonto;
+
+    if (pctInput) {
+        pctVal = Number(pctInput.value) || 0;
+        if (pctVal < 0) pctVal = 0;
+        if (pctVal > 100) pctVal = 100;
+        pctInput.value = pctVal;
+    }
+
+    if (montoInput) {
+        montoVal = Number(montoInput.value) || 0;
+        if (montoVal < 0) montoVal = 0;
+        if (montoVal > totalConDescLineas) montoVal = totalConDescLineas;
+        montoInput.value = montoVal;
+    }
+
+    let descuentoGlobalAplicado = 0;
+
+    if (montoVal > 0) {
+        descuentoGlobalMonto = montoVal;
+        descuentoGlobalPct   = 0;
+        if (pctInput) pctInput.value = 0;
+        descuentoGlobalAplicado = montoVal;
+    } else if (pctVal > 0) {
+        descuentoGlobalPct   = pctVal;
+        descuentoGlobalMonto = 0;
+        if (montoInput) montoInput.value = 0;
+        descuentoGlobalAplicado = totalConDescLineas * (pctVal / 100);
+    } else {
+        descuentoGlobalPct   = 0;
+        descuentoGlobalMonto = 0;
+        descuentoGlobalAplicado = 0;
+    }
+
+    let totalDespuesGlobal = totalConDescLineas - descuentoGlobalAplicado;
+    if (totalDespuesGlobal < 0) totalDespuesGlobal = 0;
+
+    const totalDescuento = netoBase - totalDespuesGlobal;
+    totalVenta = totalDespuesGlobal;
+
+    if (totalItemsEl) totalItemsEl.textContent = totalItems;
+    if (netoEl)       netoEl.textContent       = formatoPrecio(netoBase);
+    if (descuentoEl)  descuentoEl.textContent  = formatoPrecio(totalDescuento);
+    if (subtotalEl)   subtotalEl.textContent   = formatoPrecio(totalDespuesGlobal);
+    if (sellTotalEl)  sellTotalEl.textContent  = formatoPrecio(totalDespuesGlobal);
+    if (sellBtn)      sellBtn.disabled         = totalDespuesGlobal <= 0;
+}
+
+/**
+ * Actualiza un item a partir de la fila editada,
+ * actualiza el subtotal de ESA fila y los totales generales.
+ */
+function actualizarItemDesdeFila(row) {
+    const idVariante = row.dataset.id;
+    const item = cart.get(idVariante);
     if (!item) return;
 
-    item.qty += delta;
-    if (item.qty <= 0) {
-        cart.delete(id);
-    } else {
-        cart.set(id, item);
+    let qty = parseFloat(row.querySelector(".pos-cart-qty").value) || 0;
+    let price = parseFloat(row.querySelector(".pos-cart-price").value) || 0;
+    let discount = parseFloat(row.querySelector(".pos-cart-discount").value) || 0;
+
+    if (qty <= 0) {
+        cart.delete(idVariante);
+        renderCarrito();
+        return;
     }
-    renderCarrito();
+
+    if (price < 0) price = 0;
+    if (discount < 0) discount = 0;
+    if (discount > 100) discount = 100;
+
+    item.qty = qty;
+    item.price = price;
+    item.discountPct = discount;
+    cart.set(idVariante, item);
+
+    const lineNeto = price * qty;
+    const factorDesc = 1 - discount / 100;
+    const lineConDesc = lineNeto * factorDesc;
+
+    const subtotalSpan = row.querySelector(".pos-cart-subtotal-text");
+    if (subtotalSpan) {
+        subtotalSpan.textContent = formatoPrecio(lineConDesc);
+    }
+
+    recalcularTotalesGlobales();
 }
 
-function eliminarDelCarrito(id) {
-    if (!cart.has(id)) return;
-    cart.delete(id);
-    renderCarrito();
-}
-
+/**
+ * Render completo del carrito
+ */
 function renderCarrito() {
     const contenedor = document.getElementById("pos-cart-items");
-    const totalItemsEl = document.getElementById("pos-total-items");
-    const netoEl = document.getElementById("pos-neto");
-    const descuentoEl = document.getElementById("pos-descuento");
-    const subtotalEl = document.getElementById("pos-subtotal");
-    const sellTotalEl = document.getElementById("pos-sell-total");
-    const sellBtn = document.getElementById("pos-open-payment");
-
     if (!contenedor) return;
 
     contenedor.innerHTML = "";
 
-    let totalItems = 0;
-    let total = 0;
-
     cart.forEach((item) => {
-        const subtotal = item.price * item.qty;
-        totalItems += item.qty;
-        total += subtotal;
+        const qty = Number(item.qty) || 0;
+        const price = Number(item.price) || 0;
+        const discount = Number(item.discountPct) || 0;
+
+        const lineNeto = price * qty;
+        const factorDesc = 1 - discount / 100;
+        const lineConDesc = lineNeto * factorDesc;
 
         const row = document.createElement("div");
         row.className = "pos-cart-item";
+        row.dataset.id = item.idVariante;
+
         row.innerHTML = `
-            <div class="pos-cart-qty">
-                <button type="button" class="pos-cart-btn pos-cart-btn--minus" data-id="${item.id}">-</button>
-                <span class="pos-cart-qty-value">${item.qty}</span>
-                <button type="button" class="pos-cart-btn pos-cart-btn--plus" data-id="${item.id}">+</button>
+            <div class="pos-cart-top">
+                <span class="pos-cart-name">${item.name}</span>
+                <button
+                    type="button"
+                    class="pos-cart-remove"
+                    data-id="${item.idVariante}"
+                >&times;</button>
             </div>
-            <div class="pos-cart-name">${item.name}</div>
-            <div class="pos-cart-subtotal">${formatoPrecio(subtotal)}</div>
-            <button type="button" class="pos-cart-remove" data-id="${item.id}">&times;</button>
+
+            <div class="pos-cart-row">
+                <div class="pos-cart-field">
+                    <span class="pos-cart-field-label">Cant.</span>
+                    <input
+                        type="number"
+                        class="pos-cart-input pos-cart-qty"
+                        min="1"
+                        value="${qty}"
+                    >
+                </div>
+
+                <div class="pos-cart-field">
+                    <span class="pos-cart-field-label">Precio</span>
+                    <input
+                        type="number"
+                        class="pos-cart-input pos-cart-price"
+                        step="0.01"
+                        min="0"
+                        value="${price}"
+                    >
+                </div>
+
+                <div class="pos-cart-field">
+                    <span class="pos-cart-field-label">Desc. %</span>
+                    <input
+                        type="number"
+                        class="pos-cart-input pos-cart-discount"
+                        step="1"
+                        min="0"
+                        max="100"
+                        value="${discount}"
+                    >
+                </div>
+            </div>
+
+            <div class="pos-cart-bottom">
+                <span class="pos-cart-bottom-label">Subtotal</span>
+                <span class="pos-cart-subtotal-text">
+                    ${formatoPrecio(lineConDesc)}
+                </span>
+            </div>
         `;
+
         contenedor.appendChild(row);
     });
 
-    totalVenta = total;
-
-    totalItemsEl.textContent = totalItems;
-    netoEl.textContent = formatoPrecio(total);
-    descuentoEl.textContent = "$0,00";
-    subtotalEl.textContent = formatoPrecio(total);
-    sellTotalEl.textContent = formatoPrecio(total);
-
-    sellBtn.disabled = total <= 0;
+    recalcularTotalesGlobales();
 }
 
 // =========================
@@ -122,8 +277,8 @@ function actualizarPreciosPorLista(lista) {
         if (priceEl) priceEl.textContent = formatoPrecio(price);
     });
 
-    cart.clear();
-    renderCarrito();
+    // No vaciamos el carrito: sólo afecta nuevos productos
+    recalcularTotalesGlobales();
 }
 
 // =========================
@@ -190,10 +345,10 @@ function crearFilaPago(metodo = "EFECTIVO", monto = 0) {
     div.className = "pos-payment-row";
     div.innerHTML = `
         <select class="pos-select pos-payment-method">
-            <option value="EFECTIVO">Efectivo</option>
-            <option value="TARJETA">Tarjeta</option>
-            <option value="TRANSFERENCIA">Transferencia</option>
-            <option value="QR">QR</option>
+            <option value="EFECTIVO"${metodo === "EFECTIVO" ? " selected" : ""}>Efectivo</option>
+            <option value="TARJETA"${metodo === "TARJETA" ? " selected" : ""}>Tarjeta</option>
+            <option value="TRANSFERENCIA"${metodo === "TRANSFERENCIA" ? " selected" : ""}>Transferencia</option>
+            <option value="QR"${metodo === "QR" ? " selected" : ""}>QR</option>
         </select>
         <input type="number" class="pos-input pos-payment-amount" value="${monto}">
         <button type="button" class="pos-payment-remove">&times;</button>
@@ -278,13 +433,47 @@ function initPaymentModal() {
             monto: Number(row.querySelector(".pos-payment-amount").value)
         }));
 
+        // ---- Carrito con prorrateo de descuento global ----
+        const items = Array.from(cart.values());
+        let totalLineasConDesc = 0;
+
+        const lineasBase = items.map(item => {
+            const qty       = Number(item.qty) || 0;
+            const price     = Number(item.price) || 0;
+            const descPct   = Number(item.discountPct) || 0;
+            const lineNeto  = price * qty;
+            const lineDesc  = lineNeto * (1 - descPct / 100);
+            totalLineasConDesc += lineDesc;
+            return { item, qty, price, descPct, lineDesc };
+        });
+
+        let factorGlobal = 1;
+        if (totalLineasConDesc > 0 && totalVenta > 0) {
+            factorGlobal = totalVenta / totalLineasConDesc;
+        }
+
+        const carritoArray = lineasBase.map(({ item, qty, price, descPct, lineDesc }) => {
+            const subtotalFinal = lineDesc * factorGlobal;
+            return {
+                id_producto: item.idProducto,
+                id_variante: item.idVariante,
+                nombre: item.name,
+                cantidad: qty,
+                precio_unitario: price,
+                descuento_porcentaje: descPct,
+                subtotal: subtotalFinal
+            };
+        });
+
         const payload = {
             tipo_venta,
             lista_precios,
             total_venta: totalVenta,
             total_abonado: totalAbonado,
             saldo,
-            carrito: Array.from(cart.values()),
+            descuento_global_porcentaje: descuentoGlobalPct,
+            descuento_global_monto: descuentoGlobalMonto,
+            carrito: carritoArray,
             pagos: pagosArray,
             cliente
         };
@@ -297,16 +486,94 @@ function initPaymentModal() {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                alert("Venta guardada correctamente. ID: " + data.id_venta);
-                window.location.reload();
+                cerrarPaymentModal();
+                abrirSuccessModal(data.id_venta);
             } else {
                 alert("Error: " + data.error);
                 console.log(data);
             }
         });
-
-        cerrarPaymentModal();
     });
+}
+
+// =========================
+// Modal de éxito (Venta registrada)
+// =========================
+// =========================
+// Modal de éxito (Venta registrada)
+// =========================
+function abrirSuccessModal(idVenta) {
+    const modal = document.getElementById("pos-success-modal");
+    if (!modal) {
+        // Fallback raro: si no existe el modal, recargamos
+        window.location.reload();
+        return;
+    }
+
+    // Guardamos el id de la venta en un data-attribute del modal
+    modal.dataset.idVenta = idVenta ?? "";
+
+    const idSpan = document.getElementById("pos-success-id");
+    if (idSpan) {
+        idSpan.textContent = idVenta ?? "-";
+    }
+
+    document.body.classList.add("pos-modal-open");
+    modal.classList.add("pos-modal--open");
+}
+
+function cerrarSuccessModal() {
+    const modal = document.getElementById("pos-success-modal");
+    if (!modal) return;
+    modal.classList.remove("pos-modal--open");
+    document.body.classList.remove("pos-modal-open");
+}
+
+function initSuccessModal() {
+    const modal = document.getElementById("pos-success-modal");
+    if (!modal) return;
+
+    const btnClose   = document.getElementById("pos-success-close");
+    const btnNewSale = document.getElementById("pos-success-new-sale");
+    const btnPrint   = document.getElementById("pos-success-print");
+
+    // Cerrar clickeando el fondo (si querés mantenerlo)
+    modal.querySelectorAll("[data-close-success]").forEach(el =>
+        el.addEventListener("click", () => {
+            // Reiniciamos POS igual que Cerrar
+            cart.clear();
+            window.location.reload();
+        })
+    );
+
+    if (btnClose) {
+        btnClose.addEventListener("click", () => {
+            // Cerrar = terminar venta y reiniciar POS
+            cart.clear();
+            window.location.reload();
+        });
+    }
+
+    if (btnNewSale) {
+        btnNewSale.addEventListener("click", () => {
+            // Nueva venta = también recargamos todo
+            cart.clear();
+            window.location.reload();
+        });
+    }
+
+    if (btnPrint) {
+        btnPrint.addEventListener("click", () => {
+            const idVenta = modal.dataset.idVenta;
+            if (!idVenta) return;
+
+            // Abrimos el ticket en una nueva pestaña/ventana
+            window.open(
+                `/TYPSISTEMA/app/views/ventas/imprimir.php?id=${idVenta}`,
+                "_blank"
+            );
+        });
+    }
 }
 
 // =========================
@@ -315,23 +582,55 @@ function initPaymentModal() {
 document.addEventListener("DOMContentLoaded", () => {
     if (!document.querySelector(".pos-container")) return;
 
+    // Click en cards de producto -> agregar al carrito
     document.querySelectorAll(".pos-product-card").forEach((card) => {
         card.addEventListener("click", () => agregarAlCarritoDesdeCard(card));
     });
 
+    // Delegación de eventos en el carrito
     const cartContainer = document.getElementById("pos-cart-items");
-    cartContainer.addEventListener("click", (e) => {
-        const id = e.target.dataset.id;
-        if (!id) return;
 
-        if (e.target.classList.contains("pos-cart-btn--plus")) cambiarCantidadCarrito(id, 1);
-        else if (e.target.classList.contains("pos-cart-btn--minus")) cambiarCantidadCarrito(id, -1);
-        else if (e.target.classList.contains("pos-cart-remove")) eliminarDelCarrito(id);
+    // Inputs (cantidad, precio, descuento)
+    cartContainer.addEventListener("input", (e) => {
+        if (
+            e.target.classList.contains("pos-cart-qty") ||
+            e.target.classList.contains("pos-cart-price") ||
+            e.target.classList.contains("pos-cart-discount")
+        ) {
+            const row = e.target.closest(".pos-cart-item");
+            if (row) actualizarItemDesdeFila(row);
+        }
     });
+
+    // Botón eliminar
+    cartContainer.addEventListener("click", (e) => {
+        if (e.target.classList.contains("pos-cart-remove")) {
+            const idVariante = e.target.dataset.id;
+            if (idVariante) eliminarDelCarrito(idVariante);
+        }
+    });
+
+    // Descuento total (% y $)
+    const pctInput = document.getElementById("pos-desc-global-pct");
+    const montoInput = document.getElementById("pos-desc-global-monto");
+
+    if (pctInput) {
+        pctInput.addEventListener("input", () => {
+            recalcularTotalesGlobales();
+        });
+    }
+
+    if (montoInput) {
+        montoInput.addEventListener("input", () => {
+            recalcularTotalesGlobales();
+        });
+    }
 
     initBuscadorProductos();
     initConfigModal();
     initPaymentModal();
+    initSuccessModal();
+
     actualizarPreciosPorLista(listaPreciosActual);
     renderCarrito();
 });

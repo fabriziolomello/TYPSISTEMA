@@ -30,6 +30,9 @@ try {
     $clienteNombre = trim($data['cliente']         ?? '');
     $observaciones = $data['observaciones']        ?? '';
 
+    $descGlobalPct   = (float)($data['descuento_global_porcentaje'] ?? 0);
+    $descGlobalMonto = (float)($data['descuento_global_monto']      ?? 0);
+
     if (empty($carrito)) {
         throw new Exception("El carrito está vacío");
     }
@@ -48,7 +51,6 @@ try {
     // -------------------------
     // 3) Usuario logueado
     // -------------------------
-    // Probamos varias claves posibles de sesión
     $idUsuario = $_SESSION['usuario']['id']
         ?? $_SESSION['usuario_id']
         ?? $_SESSION['id_usuario']
@@ -96,7 +98,6 @@ try {
             $idCliente = (int)$idCliTmp;
         }
         $stmtCli->close();
-        // Si no existe, dejamos id_cliente NULL por ahora
     }
 
     // -------------------------
@@ -120,11 +121,10 @@ try {
             (NOW(), ?, ?, ?, ?, ?, ?, ?)
     ");
 
-    // i = int, d = double, s = string
     $stmtVenta->bind_param(
         'iiisdss',
         $idUsuario,
-        $idCliente,   // puede ser NULL
+        $idCliente,
         $idCaja,
         $tipo_venta,
         $total_venta,
@@ -140,19 +140,11 @@ try {
     // 8) Preparar consultas auxiliares
     // -------------------------
 
-    // precio de lista minorista/mayorista
+    // precio de lista (para id_lista_precio)
     $stmtLista = $mysqli->prepare("
         SELECT id, precio
         FROM lista_precio
         WHERE id_producto = ? AND tipo_lista = ?
-        LIMIT 1
-    ");
-
-    // variante (para FK id_variante)
-    $stmtVariante = $mysqli->prepare("
-        SELECT id
-        FROM producto_variante
-        WHERE id_producto = ?
         LIMIT 1
     ");
 
@@ -190,25 +182,19 @@ try {
     // 9) Recorrer carrito
     // -------------------------
     foreach ($carrito as $item) {
-        // El POS manda el id de PRODUCTO en item['id']
-        $idProducto = (int)$item['id'];
-        $cantidad   = (int)$item['qty'];
+        $idProducto = (int)($item['id_producto'] ?? 0);
+        $idVariante = (int)($item['id_variante'] ?? 0);
+        $cantidad   = (int)($item['cantidad'] ?? 0);
+
+        if ($idProducto <= 0 || $idVariante <= 0) {
+            throw new Exception("Faltan datos de producto/variante en el carrito.");
+        }
 
         if ($cantidad <= 0) {
-            throw new Exception("Cantidad inválida para producto ID $idProducto");
+            throw new Exception("Cantidad inválida para producto ID $idProducto / variante ID $idVariante");
         }
 
-        // 9.1) Buscar VARIANTE asociada a ese producto
-        $stmtVariante->bind_param('i', $idProducto);
-        $stmtVariante->execute();
-        $stmtVariante->bind_result($idVariante);
-
-        if (!$stmtVariante->fetch()) {
-            throw new Exception("No se encontró variante para el producto ID $idProducto");
-        }
-        $stmtVariante->free_result();
-
-        // 9.2) Buscar precio de lista según MINORISTA/MAYORISTA
+        // Buscar id_lista_precio
         $stmtLista->bind_param('is', $idProducto, $lista_precios);
         $stmtLista->execute();
         $stmtLista->bind_result($idListaPrecio, $precioLista);
@@ -218,11 +204,14 @@ try {
         }
         $stmtLista->free_result();
 
-        $precioUnitario = (float)$precioLista;
-        $descuento      = 0.0;
-        $subtotal       = $precioUnitario * $cantidad;
+        // Datos desde el POS
+        $precioUnitario = (float)($item['precio_unitario'] ?? $precioLista);
+        $subtotal       = (float)($item['subtotal'] ?? ($precioUnitario * $cantidad));
 
-        // 9.3) Insertar DETALLE_VENTAS (usa idVariante, no idProducto)
+        // Descuento como monto (incluye desc. por línea + global prorrateado)
+        $descuento = ($precioUnitario * $cantidad) - $subtotal;
+
+        // Insertar DETALLE_VENTAS
         $stmtDet->bind_param(
             'iiiiddd',
             $idVenta,
@@ -235,21 +224,20 @@ try {
         );
         $stmtDet->execute();
 
-        // 9.4) Insertar MOVIMIENTO_STOCK
+        // Insertar MOVIMIENTO_STOCK
         $stmtStock->bind_param('iii', $idVariante, $cantidad, $idVenta);
         $stmtStock->execute();
 
-        // 9.5) Actualizar stock en PRODUCTOS (para consultas generales)
+        // Actualizar stock en PRODUCTOS
         $stmtUpdateProd->bind_param('ii', $cantidad, $idProducto);
         $stmtUpdateProd->execute();
 
-        // 9.6) Actualizar stock en PRODUCTO_VARIANTE (para respetar la FK)
+        // Actualizar stock en PRODUCTO_VARIANTE
         $stmtUpdateVariante->bind_param('ii', $cantidad, $idVariante);
         $stmtUpdateVariante->execute();
     }
 
     $stmtLista->close();
-    $stmtVariante->close();
     $stmtDet->close();
     $stmtStock->close();
     $stmtUpdateProd->close();
@@ -274,7 +262,6 @@ try {
                 continue;
             }
 
-            // i = id_caja, i = id_venta, d = monto, s = medio_pago, i = id_usuario
             $stmtCaja->bind_param('iidsi', $idCaja, $idVenta, $monto, $metodo, $idUsuario);
             $stmtCaja->execute();
         }
@@ -310,8 +297,11 @@ try {
 } catch (Throwable $e) {
 
     if (isset($mysqli)) {
-        // si se abrió conexión, intentamos rollback
-        $mysqli->rollback();
+        try {
+            $mysqli->rollback();
+        } catch (Throwable $ignored) {
+            // ignoramos errores de rollback
+        }
     }
 
     echo json_encode([
