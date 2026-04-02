@@ -1,0 +1,230 @@
+/* ========================
+   PROVEEDORES
+   ======================== */
+
+.prov-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.prov-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.prov-titulo { margin: 0; }
+
+/* Filtros */
+.prov-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.prov-filtros input[type="text"] {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 260px;
+}
+
+/* Tabla */
+.prov-tabla-wrapper {
+    overflow-x: auto;
+}
+
+.prov-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.prov-tabla th,
+.prov-tabla td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.prov-tabla th {
+    background: #f4f4f4;
+    font-weight: 600;
+    text-align: left;
+}
+
+.prov-tabla td:last-child {
+    text-align: center;
+    width: 90px;
+}
+
+.col-monto {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.col-acciones { text-align: center; width: 90px; }
+
+.prov-link {
+    color: var(--azul);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.prov-link:hover { text-decoration: underline; }
+
+.fila-inactiva { opacity: 0.55; }
+
+/* Badge estado */
+.prov-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.prov-badge--activo   { background: #d4edda; color: #155724; }
+.prov-badge--inactivo { background: #f5f5f5; color: #666; }
+
+/* Botones */
+.btn-primary {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: var(--azul);
+    color: var(--blanco);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-primary:hover { background-color: #0052a3; text-decoration: none; }
+
+.btn-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: transparent;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-link:hover { background-color: #e8f0fb; text-decoration: none; }
+
+.btn-accion {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-editar {
+    background: #e8f0fb;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+}
+
+.btn-editar:hover { background: #d0e2ff; }
+
+/* Modales */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay--visible {
+    display: flex;
+}
+
+body.modal-abierto { overflow: hidden; }
+
+.modal-dialog {
+    background: #fff;
+    border-radius: 8px;
+    width: 420px;
+    max-width: 95vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+
+.modal-dialog--lg {
+    width: 860px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.modal-cerrar {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+    padding: 0 4px;
+}
+
+.modal-cerrar:hover { color: #222; }
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.modal-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+}
+
+.modal-field input {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.modal-field input:focus {
+    border-color: var(--azul);
+    outline: none;
+}

@@ -8,6 +8,7 @@
             <li class="menu-title">Stock</li>
             <li><a href="/TYPSISTEMA/app/views/stock/stock_consultar/index.php">Consultar stock</a></li>
             <li><a href="/TYPSISTEMA/app/views/stock/stock_movimientos/index.php">Ingreso / Egreso</a></li>
+            <li><a href="/TYPSISTEMA/app/views/stock/transferencia/index.php">Transferencia</a></li>
 
             <li class="menu-title">Caja</li>
             <li><a href="/TYPSISTEMA/app/views/caja/apertura.php">Apertura de caja</a></li>

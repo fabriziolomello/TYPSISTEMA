@@ -28,9 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (!password_verify($password, $user['password_hash'])) {
             $mensaje = "La contraseña es incorrecta.";
         } else {
-            $_SESSION['usuario_id']     = $user['id'];
-            $_SESSION['usuario_nombre'] = $user['nombre'];
-            $_SESSION['usuario_rol']    = $user['rol'];
+            $_SESSION['usuario_id']       = $user['id'];
+            $_SESSION['usuario_nombre']   = $user['nombre'];
+            $_SESSION['usuario_rol']      = $user['rol'];
+            $_SESSION['usuario_deposito'] = (int)($user['id_deposito'] ?? 1);
 
             header("Location: ../dashboard/index.php");
             exit;

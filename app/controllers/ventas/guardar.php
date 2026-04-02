@@ -51,7 +51,7 @@ try {
     // -------------------------
     // 3) Usuario logueado
     // -------------------------
-    $idUsuario = $_SESSION['usuario']['id']
+    $idUsuario  = $_SESSION['usuario']['id']
         ?? $_SESSION['usuario_id']
         ?? $_SESSION['id_usuario']
         ?? null;
@@ -59,6 +59,8 @@ try {
     if (!$idUsuario) {
         throw new Exception("No se encontró el usuario en la sesión");
     }
+
+    $idDeposito = (int)($_SESSION['usuario_deposito'] ?? 1);
 
     // -------------------------
     // 4) Caja abierta
@@ -82,9 +84,12 @@ try {
     // -------------------------
     // 5) Cliente (opcional)
     // -------------------------
+    $idClienteDirecto = isset($data['id_cliente']) && $data['id_cliente'] !== null ? (int)$data['id_cliente'] : 0;
     $idCliente = null;
 
-    if ($clienteNombre !== '' && strtolower($clienteNombre) !== 'consumidor final') {
+    if ($idClienteDirecto > 0) {
+        $idCliente = $idClienteDirecto;
+    } elseif ($clienteNombre !== '' && strtolower($clienteNombre) !== 'consumidor final') {
         $stmtCli = $mysqli->prepare("
             SELECT id
             FROM clientes
@@ -159,9 +164,9 @@ try {
     // movimiento_stock
     $stmtStock = $mysqli->prepare("
         INSERT INTO movimiento_stock
-            (fecha_hora, id_variante, tipo, cantidad, id_venta, observaciones)
+            (fecha_hora, id_variante, tipo, cantidad, id_venta, observaciones, id_deposito)
         VALUES
-            (NOW(), ?, 'VENTA', ?, ?, '')
+            (NOW(), ?, 'VENTA', ?, ?, '', ?)
     ");
 
     // actualizar stock en productos
@@ -176,6 +181,13 @@ try {
         UPDATE producto_variante
         SET stock_actual = stock_actual - ?
         WHERE id = ?
+    ");
+
+    // actualizar stock en stock_deposito
+    $stmtUpdateDep = $mysqli->prepare("
+        INSERT INTO stock_deposito (id_variante, id_deposito, stock_actual)
+        VALUES (?, ?, 0)
+        ON DUPLICATE KEY UPDATE stock_actual = GREATEST(0, stock_actual - ?)
     ");
 
     // -------------------------
@@ -225,7 +237,7 @@ try {
         $stmtDet->execute();
 
         // Insertar MOVIMIENTO_STOCK
-        $stmtStock->bind_param('iii', $idVariante, $cantidad, $idVenta);
+        $stmtStock->bind_param('iiiii', $idVariante, $cantidad, $idVenta, $idDeposito);
         $stmtStock->execute();
 
         // Actualizar stock en PRODUCTOS
@@ -235,6 +247,10 @@ try {
         // Actualizar stock en PRODUCTO_VARIANTE
         $stmtUpdateVariante->bind_param('ii', $cantidad, $idVariante);
         $stmtUpdateVariante->execute();
+
+        // Actualizar stock en STOCK_DEPOSITO
+        $stmtUpdateDep->bind_param('iii', $idVariante, $idDeposito, $cantidad);
+        $stmtUpdateDep->execute();
     }
 
     $stmtLista->close();
@@ -242,6 +258,7 @@ try {
     $stmtStock->close();
     $stmtUpdateProd->close();
     $stmtUpdateVariante->close();
+    $stmtUpdateDep->close();
 
     // -------------------------
     // 10) Movimientos de caja

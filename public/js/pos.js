@@ -423,9 +423,10 @@ function initPaymentModal() {
             return;
         }
 
-        const tipo_venta = document.getElementById("pos-tipo-venta").value;
+        const tipo_venta    = document.getElementById("pos-tipo-venta").value;
         const lista_precios = listaPreciosActual;
-        const cliente = document.getElementById("pos-client-input").value;
+        const cliente       = document.getElementById("pos-client-input").value;
+        const id_cliente    = document.getElementById("pos-client-id").value || null;
 
         // Armamos pagos
         const pagosArray = Array.from(document.querySelectorAll(".pos-payment-row")).map(row => ({
@@ -475,7 +476,8 @@ function initPaymentModal() {
             descuento_global_monto: descuentoGlobalMonto,
             carrito: carritoArray,
             pagos: pagosArray,
-            cliente
+            cliente,
+            id_cliente
         };
 
         fetch("/TYPSISTEMA/app/controllers/ventas/guardar.php", {
@@ -577,6 +579,65 @@ function initSuccessModal() {
 }
 
 // =========================
+// Buscador de cliente (autocomplete)
+// =========================
+function initClienteSearch() {
+    const input      = document.getElementById("pos-client-input");
+    const hiddenId   = document.getElementById("pos-client-id");
+    const suggestions = document.getElementById("pos-client-suggestions");
+
+    if (!input || !hiddenId || !suggestions) return;
+
+    let debounceTimer = null;
+
+    function cerrarSugerencias() {
+        suggestions.innerHTML = "";
+        suggestions.style.display = "none";
+    }
+
+    input.addEventListener("input", () => {
+        const q = input.value.trim();
+        hiddenId.value = ""; // limpiar selección si se modifica el texto
+
+        if (q.length < 2) { cerrarSugerencias(); return; }
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetch("/TYPSISTEMA/app/controllers/ventas/buscar_clientes.php?q=" + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(clientes => {
+                    if (!clientes.length) { cerrarSugerencias(); return; }
+
+                    suggestions.innerHTML = clientes.map(c =>
+                        `<div class="pos-client-suggestion" data-id="${c.id}" data-nombre="${c.nombre.replace(/"/g, '&quot;')}">${c.nombre}</div>`
+                    ).join("");
+                    suggestions.style.display = "block";
+
+                    suggestions.querySelectorAll(".pos-client-suggestion").forEach(item => {
+                        item.addEventListener("click", () => {
+                            input.value    = item.dataset.nombre;
+                            hiddenId.value = item.dataset.id;
+                            cerrarSugerencias();
+                        });
+                    });
+                });
+        }, 220);
+    });
+
+    // Cerrar al hacer click fuera
+    document.addEventListener("click", e => {
+        if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+            cerrarSugerencias();
+        }
+    });
+
+    // Limpiar id si el usuario borra el nombre
+    input.addEventListener("change", () => {
+        if (input.value.trim() === "") hiddenId.value = "";
+    });
+}
+
+// =========================
 // Inicialización
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
@@ -627,6 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     initBuscadorProductos();
+    initClienteSearch();
     initConfigModal();
     initPaymentModal();
     initSuccessModal();

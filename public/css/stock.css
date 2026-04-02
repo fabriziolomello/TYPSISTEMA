@@ -98,6 +98,12 @@
   font-weight: 900;
 }
 
+.stock-total {
+  background: #f0f4ff;
+  font-weight: 900;
+  border-left: 2px solid #c7d7f5;
+}
+
 .stock-empty{
   text-align: center;
   padding: 18px !important;

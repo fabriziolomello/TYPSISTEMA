@@ -103,7 +103,7 @@ ob_start();
 <h1>Ingreso / Egreso (Stock)</h1>
 
 <p>
-  <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/nuevo.php">Nuevo movimiento</a>
+  <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/nuevo.php" class="btn-primary">Nuevo movimiento</a>
 </p>
 
 <?php if ($ok === 1): ?>
@@ -129,14 +129,14 @@ ob_start();
   <label>Hasta:</label>
   <input type="date" name="hasta" value="<?= h($hasta) ?>">
 
-  <button type="submit">Filtrar</button>
+  <button type="submit" class="btn-primary">Filtrar</button>
 
-  <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/index.php">Limpiar</a>
+  <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/index.php" class="btn-link">Limpiar</a>
 </form>
 
 <hr>
 
-<table border="1" cellpadding="6" cellspacing="0">
+<table>
   <thead>
     <tr>
       <th>Fecha</th>
@@ -158,7 +158,7 @@ ob_start();
           <td><?= h($row['fecha_hora']) ?></td>
           <td><?= h($row['tipo']) ?></td>
           <td><?= h($row['producto']) ?></td>
-          <td><?= h($row['variante']) ?></td>
+          <td><?= strtolower($row['variante']) === 'unica' ? '' : h($row['variante']) ?></td>
           <td><?= h($row['cantidad']) ?></td>
           <td><?= h($row['observaciones']) ?></td>
         </tr>

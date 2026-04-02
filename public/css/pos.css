@@ -208,6 +208,31 @@
     transform: translateY(-1px);
 }
 
+.pos-client-suggestions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    z-index: 200;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.pos-client-suggestion {
+    padding: 9px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.pos-client-suggestion:last-child { border-bottom: none; }
+.pos-client-suggestion:hover { background: #eff6ff; }
+
 /* =========================
    Carrito
    ========================= */

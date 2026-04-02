@@ -10,14 +10,15 @@ require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
 
 $listaPorDefecto = 'MINORISTA'; // o 'MAYORISTA' si querés arrancar así
+$idDeposito = (int)($_SESSION['usuario_deposito'] ?? 1);
 
-// Traer productos + variantes + precios de lista
+// Traer productos + variantes + precios de lista + stock del depósito del usuario
 try {
     $db = new Database();
-    $mysqli = $db->getConnection(); // conexión mysqli
+    $mysqli = $db->getConnection();
 
     $sql = "
-        SELECT 
+        SELECT
             p.id            AS id_producto,
             p.nombre        AS nombre_producto,
             p.codigo_barras AS codigo_producto,
@@ -25,21 +26,23 @@ try {
             v.id             AS id_variante,
             v.nombre_variante,
             COALESCE(v.codigo_barras, p.codigo_barras) AS codigo_variante,
-            v.stock_actual   AS stock_variante,
+            COALESCE(sd.stock_actual, 0) AS stock_variante,
 
             MAX(CASE WHEN lp.tipo_lista = 'MINORISTA' THEN lp.precio END) AS precio_minorista,
             MAX(CASE WHEN lp.tipo_lista = 'MAYORISTA' THEN lp.precio END) AS precio_mayorista
         FROM productos p
-        INNER JOIN producto_variante v 
+        INNER JOIN producto_variante v
             ON v.id_producto = p.id
            AND v.activo = 1
-        LEFT JOIN lista_precio lp 
+        LEFT JOIN stock_deposito sd
+            ON sd.id_variante = v.id AND sd.id_deposito = $idDeposito
+        LEFT JOIN lista_precio lp
             ON lp.id_producto = p.id
         WHERE p.activo = 1
-        GROUP BY 
+        GROUP BY
             p.id, p.nombre, p.codigo_barras,
-            v.id, v.nombre_variante, v.codigo_barras, v.stock_actual
-        ORDER BY 
+            v.id, v.nombre_variante, v.codigo_barras, sd.stock_actual
+        ORDER BY
             p.nombre, v.nombre_variante
     ";
 
@@ -88,8 +91,10 @@ ob_start();
                         $codigoVar    = htmlspecialchars($producto['codigo_variante'] ?? '');
                         $stock        = (int) $producto['stock_variante'];
 
-                        // Nombre mostrado = Producto - Variante
-                        $nombreMostrar = $nombreProd . ' - ' . $nombreVar;
+                        // Nombre mostrado = Producto (variante solo si no es "unica")
+                        $nombreMostrar = strtolower($producto['nombre_variante']) === 'unica'
+                            ? $nombreProd
+                            : $nombreProd . ' - ' . $nombreVar;
 
                         $precioMinorista = isset($producto['precio_minorista']) ? (float) $producto['precio_minorista'] : 0;
                         $precioMayorista = isset($producto['precio_mayorista']) ? (float) $producto['precio_mayorista'] : 0;
@@ -134,16 +139,16 @@ ob_start();
         <!-- BUSCADOR DE CLIENTE -->
         <div class="pos-client-box">
             <label for="pos-client-input" class="pos-label">Cliente</label>
-            <div class="pos-client-input-wrapper">
+            <div class="pos-client-input-wrapper" style="position:relative;">
                 <input
                     type="text"
                     id="pos-client-input"
                     class="pos-client-input"
                     placeholder="Consumidor Final"
+                    autocomplete="off"
                 >
-                <button type="button" class="pos-client-search-btn">
-                    Buscar
-                </button>
+                <input type="hidden" id="pos-client-id">
+                <div id="pos-client-suggestions" class="pos-client-suggestions"></div>
             </div>
         </div>
 

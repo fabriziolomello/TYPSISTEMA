@@ -1,0 +1,302 @@
+/* ========================
+   CLIENTES
+   ======================== */
+
+.cli-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cli-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cli-titulo { margin: 0; }
+
+/* Filtros */
+.cli-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.cli-filtros input[type="text"] {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 260px;
+}
+
+/* Tabla */
+.cli-tabla-wrapper {
+    overflow-x: auto;
+}
+
+.cli-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cli-tabla th,
+.cli-tabla td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.cli-tabla th {
+    background: #f4f4f4;
+    font-weight: 600;
+    text-align: left;
+}
+
+.cli-tabla td:last-child {
+    text-align: center;
+    width: 90px;
+}
+
+.col-monto {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.saldo-pendiente {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.cli-link {
+    color: var(--azul);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.cli-link:hover { text-decoration: underline; }
+
+/* Filas pendientes en modal compras */
+.fila-pendiente {
+    background: #fff8e1;
+}
+
+/* Badge estado pago */
+.cli-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.cli-badge--pagada      { background: #d4edda; color: #155724; }
+.cli-badge--pendiente   { background: #fff3cd; color: #856404; }
+.cli-badge--parcial     { background: #fde8d8; color: #8a3a00; }
+
+/* Botones */
+.btn-primary {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: var(--azul);
+    color: var(--blanco);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-primary:hover { background-color: #0052a3; text-decoration: none; }
+
+.btn-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: transparent;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-link:hover { background-color: #e8f0fb; text-decoration: none; }
+
+.btn-accion {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-editar {
+    background: #e8f0fb;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+}
+
+.btn-editar:hover { background: #d0e2ff; }
+
+.col-acciones { text-align: center; width: 90px; }
+
+.col-acciones-doble {
+    text-align: center;
+    white-space: nowrap;
+    width: 200px;
+}
+
+.col-acciones-doble .btn-accion {
+    display: inline-block;
+    margin: 0 2px;
+}
+
+/* Modales */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay--visible {
+    display: flex;
+}
+
+body.modal-abierto { overflow: hidden; }
+
+.modal-dialog {
+    background: #fff;
+    border-radius: 8px;
+    width: 480px;
+    max-width: 95vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+
+.modal-dialog--lg {
+    width: 760px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.modal-cerrar {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+    padding: 0 4px;
+}
+
+.modal-cerrar:hover { color: #222; }
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.modal-field--wide {
+    grid-column: 1 / -1;
+}
+
+.modal-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+}
+
+.modal-field input,
+.modal-field select {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.modal-field input:focus,
+.modal-field select:focus {
+    border-color: var(--azul);
+    outline: none;
+}
+
+.modal-field input:disabled {
+    background: #f5f5f5;
+    color: #666;
+}
+
+/* Resumen de venta en modal detalle */
+.detalle-resumen {
+    margin-top: 16px;
+    border-top: 2px solid #e2e8f0;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.detalle-resumen-row {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+}
+
+.detalle-resumen-row span:first-child {
+    color: #666;
+    min-width: 130px;
+    text-align: right;
+}
+
+.detalle-resumen-row span:last-child {
+    font-variant-numeric: tabular-nums;
+    min-width: 100px;
+    text-align: right;
+}
+
+.detalle-resumen-saldo {
+    font-weight: 700;
+    font-size: 15px;
+}

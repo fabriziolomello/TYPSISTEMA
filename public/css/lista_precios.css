@@ -1,0 +1,176 @@
+/* ========================
+   LISTA DE PRECIOS
+   ======================== */
+
+.lp-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.lp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lp-titulo { margin: 0; }
+
+/* Filtros */
+.lp-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.lp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lp-field label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.lp-field input,
+.lp-field select {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 180px;
+}
+
+/* Card aumento masivo */
+.lp-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lp-card-titulo {
+    font-weight: 700;
+    font-size: 14px;
+    margin: 0;
+}
+
+.lp-aumento-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.lp-pct-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lp-pct-wrapper input {
+    width: 100px;
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.lp-hint {
+    font-size: 12px;
+    color: #888;
+    margin: 0;
+}
+
+/* Tabla */
+.lp-tabla-wrapper {
+    overflow-x: auto;
+}
+
+.lp-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lp-tabla th,
+.lp-tabla td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.lp-tabla th {
+    background: #f4f4f4;
+    font-weight: 600;
+    text-align: left;
+}
+
+.lp-tabla td:last-child {
+    text-align: center;
+    width: 80px;
+}
+
+.lp-input {
+    width: 130px;
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: right;
+}
+
+.lp-input:focus {
+    border-color: var(--azul);
+    outline: none;
+}
+
+/* Botones */
+.btn-primary {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: var(--azul);
+    color: var(--blanco);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-primary:hover { background-color: #0052a3; text-decoration: none; }
+
+.btn-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: transparent;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.btn-link:hover { background-color: #e8f0fb; text-decoration: none; }
+
+.btn-accion {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-editar {
+    background: #e8f0fb;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+}
+
+.btn-editar:hover { background: #d0e2ff; }
