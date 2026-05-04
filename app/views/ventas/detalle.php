@@ -171,7 +171,7 @@ if ($saldo < 0) $saldo = 0;
 // Si existe variante Y NO es "unica", entonces mostrarla entre paréntesis
 $variante = $item['nombre_variante'] ?? '';
 
-if ($variante !== '' && strtolower($variante) !== 'unica') {
+if ($variante !== '' && mb_strtolower($variante, 'UTF-8') !== 'unica') {
     $nombre .= " ({$variante})";
 }
               if ($nombre === '') {

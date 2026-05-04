@@ -186,7 +186,7 @@ ob_start();
                 <tr class="<?= $totalStock === 0 ? 'sin-stock' : '' ?>">
                     <td><?= htmlspecialchars($it['codigo_barras'] ?? '') ?></td>
                     <td><?= htmlspecialchars($it['producto']) ?></td>
-                    <td><?= strtolower($it['variante'] ?? '') === 'unica' ? '' : htmlspecialchars($it['variante'] ?? '') ?></td>
+                    <td><?= mb_strtolower($it['variante'] ?? '', 'UTF-8') === 'unica' ? '' : htmlspecialchars($it['variante'] ?? '') ?></td>
                     <td><?= htmlspecialchars($it['categoria'] ?? '-') ?></td>
                     <td><?= $it['precio_costo'] > 0 ? number_format((float)$it['precio_costo'], 2, ',', '.') : '-' ?></td>
                     <?php if ($idDep > 0): ?>

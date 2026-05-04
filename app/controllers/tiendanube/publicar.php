@@ -41,7 +41,8 @@ try {
     }
 
     $stmtVariantes = $conn->prepare("
-        SELECT pv.id, pv.nombre_variante, COALESCE(pv.codigo_barras, p.codigo_barras) AS sku,
+        SELECT pv.id, pv.nombre_variante, pv.color, pv.talle,
+               COALESCE(pv.codigo_barras, p.codigo_barras) AS sku,
                COALESCE(sd.stock_actual, 0) AS stock
         FROM producto_variante pv
         INNER JOIN productos p ON p.id = pv.id_producto
@@ -65,9 +66,10 @@ try {
 
             $precio = (float)($prod['precio_minorista'] ?? 0);
 
-            // Construir body para TN
-            $tieneVariantesReales = count($variantes) > 1 ||
-                strtolower($variantes[0]['nombre_variante']) !== 'unica';
+            // Detectar qué atributos usa este producto
+            $usaColor = !empty(array_filter(array_column($variantes, 'color')));
+            $usaTalle = !empty(array_filter(array_column($variantes, 'talle')));
+            $tieneVariantesReales = $usaColor || $usaTalle;
 
             $tnVariantes = [];
             foreach ($variantes as $v) {
@@ -77,7 +79,10 @@ try {
                 ];
                 if ($v['sku']) $tnVar['sku'] = $v['sku'];
                 if ($tieneVariantesReales) {
-                    $tnVar['values'] = [['es' => $v['nombre_variante']]];
+                    $values = [];
+                    if ($usaColor) $values[] = ['es' => $v['color'] ?? ''];
+                    if ($usaTalle) $values[] = ['es' => $v['talle'] ?? ''];
+                    $tnVar['values'] = $values;
                 }
                 $tnVariantes[] = $tnVar;
             }
@@ -88,7 +93,10 @@ try {
             ];
 
             if ($tieneVariantesReales) {
-                $body['attributes'] = [['es' => 'Variante']];
+                $attrs = [];
+                if ($usaColor) $attrs[] = ['es' => 'Color'];
+                if ($usaTalle) $attrs[] = ['es' => 'Talle'];
+                $body['attributes'] = $attrs;
             }
 
             $tnProd = tn_request('POST', 'products', $body, $config);

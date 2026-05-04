@@ -196,7 +196,7 @@ ob_start();
                         <?php foreach ($g['items'] as $it): ?>
                             <tr>
                                 <td style="padding:6px 10px;border:1px solid #ddd;font-size:13px;"><?= htmlspecialchars($it['producto']) ?></td>
-                                <td style="padding:6px 10px;border:1px solid #ddd;font-size:13px;"><?= strtolower($it['variante']) === 'unica' ? '-' : htmlspecialchars($it['variante']) ?></td>
+                                <td style="padding:6px 10px;border:1px solid #ddd;font-size:13px;"><?= mb_strtolower($it['variante'], 'UTF-8') === 'unica' ? '-' : htmlspecialchars($it['variante']) ?></td>
                                 <td style="padding:6px 10px;border:1px solid #ddd;font-size:13px;text-align:center;"><?= (int)$it['cantidad'] ?></td>
                             </tr>
                         <?php endforeach; ?>

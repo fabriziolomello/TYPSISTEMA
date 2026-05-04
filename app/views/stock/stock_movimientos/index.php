@@ -158,7 +158,7 @@ ob_start();
           <td><?= h($row['fecha_hora']) ?></td>
           <td><?= h($row['tipo']) ?></td>
           <td><?= h($row['producto']) ?></td>
-          <td><?= strtolower($row['variante']) === 'unica' ? '' : h($row['variante']) ?></td>
+          <td><?= mb_strtolower($row['variante'], 'UTF-8') === 'unica' ? '' : h($row['variante']) ?></td>
           <td><?= h($row['cantidad']) ?></td>
           <td><?= h($row['observaciones']) ?></td>
         </tr>

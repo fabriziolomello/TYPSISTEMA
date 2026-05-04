@@ -102,7 +102,7 @@ ob_start();
                         $stock        = (int) $producto['stock_variante'];
 
                         // Nombre mostrado = Producto (variante solo si no es "unica")
-                        $nombreMostrar = strtolower($producto['nombre_variante']) === 'unica'
+                        $nombreMostrar = mb_strtolower($producto['nombre_variante'], 'UTF-8') === 'unica'
                             ? $nombreProd
                             : $nombreProd . ' - ' . $nombreVar;
 

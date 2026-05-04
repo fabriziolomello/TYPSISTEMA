@@ -192,6 +192,8 @@ try {
 
     // -------------------------
     // 9) Recorrer carrito
+    $variantesVendidas = [];
+
     // -------------------------
     foreach ($carrito as $item) {
         $idProducto = (int)($item['id_producto'] ?? 0);
@@ -237,7 +239,7 @@ try {
         $stmtDet->execute();
 
         // Insertar MOVIMIENTO_STOCK
-        $stmtStock->bind_param('iiiii', $idVariante, $cantidad, $idVenta, $idDeposito);
+        $stmtStock->bind_param('iiii', $idVariante, $cantidad, $idVenta, $idDeposito);
         $stmtStock->execute();
 
         // Actualizar stock en PRODUCTOS
@@ -251,6 +253,8 @@ try {
         // Actualizar stock en STOCK_DEPOSITO
         $stmtUpdateDep->bind_param('iii', $idVariante, $idDeposito, $cantidad);
         $stmtUpdateDep->execute();
+
+        $variantesVendidas[] = $idVariante;
     }
 
     $stmtLista->close();
@@ -304,6 +308,31 @@ try {
     // 12) Commit y respuesta
     // -------------------------
     $mysqli->commit();
+
+    // Sincronizar stock de variantes vendidas con Tienda Nube (silencioso)
+    try {
+        require_once __DIR__ . '/../../controllers/tiendanube/api.php';
+        $tnConfig = $mysqli->query("SELECT store_id, access_token, id_deposito FROM tiendanube_config LIMIT 1")->fetch_assoc();
+        if ($tnConfig && $tnConfig['store_id'] && !empty($variantesVendidas)) {
+            $idsIn = implode(',', array_map('intval', array_unique($variantesVendidas)));
+            $tnRows = $mysqli->query("
+                SELECT tv.tn_variant_id, tp.tn_product_id,
+                       COALESCE(sd.stock_actual, 0) AS stock
+                FROM tiendanube_variante tv
+                INNER JOIN producto_variante pv ON pv.id = tv.id_variante
+                INNER JOIN tiendanube_producto tp ON tp.id_producto = pv.id_producto
+                LEFT JOIN stock_deposito sd ON sd.id_variante = tv.id_variante AND sd.id_deposito = {$tnConfig['id_deposito']}
+                WHERE tv.id_variante IN ($idsIn)
+            ")->fetch_all(MYSQLI_ASSOC);
+            foreach ($tnRows as $row) {
+                tn_request('PUT',
+                    "products/{$row['tn_product_id']}/variants/{$row['tn_variant_id']}",
+                    ['stock' => (int)$row['stock']],
+                    $tnConfig
+                );
+            }
+        }
+    } catch (Throwable $ignored) {}
 
     echo json_encode([
         'success'  => true,

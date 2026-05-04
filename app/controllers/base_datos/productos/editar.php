@@ -24,6 +24,13 @@ try {
     if ($id <= 0)  throw new Exception('ID inválido');
     if (!$nombre)  throw new Exception('El nombre es obligatorio');
 
+    function generarNombreVariante(?string $color, ?string $talle): string {
+        if ($color && $talle) return "$color / $talle";
+        if ($color)           return $color;
+        if ($talle)           return $talle;
+        return 'unica';
+    }
+
     $db   = new Database();
     $conn = $db->getConnection();
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -55,24 +62,25 @@ try {
     // Actualizar/insertar variantes
     if (!empty($variantes)) {
         $stmtUpVar = $conn->prepare("
-            UPDATE producto_variante SET nombre_variante = ?, codigo_barras = ? WHERE id = ? AND id_producto = ?
+            UPDATE producto_variante SET nombre_variante = ?, color = ?, talle = ?, codigo_barras = ? WHERE id = ? AND id_producto = ?
         ");
         $stmtInsVar = $conn->prepare("
-            INSERT INTO producto_variante (id_producto, nombre_variante, codigo_barras, stock_actual) VALUES (?, ?, ?, ?)
+            INSERT INTO producto_variante (id_producto, nombre_variante, color, talle, codigo_barras, stock_actual) VALUES (?, ?, ?, ?, ?, ?)
         ");
 
         foreach ($variantes as $v) {
             $vid     = (int)($v['id'] ?? 0);
-            $vnombre = trim($v['nombre'] ?? '');
+            $vcolor  = trim($v['color'] ?? '') ?: null;
+            $vtalle  = trim($v['talle'] ?? '') ?: null;
             $vcodigo = trim($v['codigo'] ?? '') ?: null;
             $vstock  = (int)($v['stock'] ?? 0);
-            if (!$vnombre) continue;
+            $vnombre = generarNombreVariante($vcolor, $vtalle);
 
             if ($vid > 0) {
-                $stmtUpVar->bind_param('ssii', $vnombre, $vcodigo, $vid, $id);
+                $stmtUpVar->bind_param('ssssii', $vnombre, $vcolor, $vtalle, $vcodigo, $vid, $id);
                 $stmtUpVar->execute();
             } else {
-                $stmtInsVar->bind_param('issi', $id, $vnombre, $vcodigo, $vstock);
+                $stmtInsVar->bind_param('issssi', $id, $vnombre, $vcolor, $vtalle, $vcodigo, $vstock);
                 $stmtInsVar->execute();
             }
         }

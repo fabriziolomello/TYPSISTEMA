@@ -21,7 +21,11 @@ if ($configurado) {
         // Últimos 50 pedidos ordenados por fecha desc
         $pedidos = tn_request('GET', 'orders?per_page=50&sort_by=created_at&sort_direction=desc', [], $config);
     } catch (Throwable $e) {
-        $error = $e->getMessage();
+        if (str_contains($e->getMessage(), 'Last page is 0')) {
+            $pedidos = [];
+        } else {
+            $error = $e->getMessage();
+        }
     }
 }
 

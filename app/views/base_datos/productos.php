@@ -361,13 +361,14 @@ ob_start();
             <!-- Variantes -->
             <fieldset class="modal-section">
                 <legend>Variantes</legend>
-                <p class="modal-hint">Si el producto no tiene variantes dejá solo "Única".</p>
+                <p class="modal-hint">Si el producto no tiene variantes dejá Color y Talle vacíos. Podés usar solo uno de los dos.</p>
                 <div id="np-variantes-lista">
                     <!-- fila inicial -->
                     <div class="variante-fila">
-                        <input type="text" class="var-nombre" placeholder="Nombre variante" value="unica">
-                        <input type="text" class="var-codigo" placeholder="Código de barras (opcional)">
-                        <input type="number" class="var-stock" placeholder="Stock inicial" min="0" value="0">
+                        <input type="text"   class="var-color"  placeholder="Color (opcional)">
+                        <input type="text"   class="var-talle"  placeholder="Talle (opcional)">
+                        <input type="text"   class="var-codigo" placeholder="Código de barras (opcional)">
+                        <input type="number" class="var-stock"  placeholder="Stock inicial" min="0" value="0">
                         <button type="button" class="btn-eliminar-var" title="Eliminar">&times;</button>
                     </div>
                 </div>
@@ -409,11 +410,12 @@ modalEl.addEventListener('click', e => { if (e.target === modalEl) cerrarModal()
 // =====================
 // Variantes
 // =====================
-function crearFilaVariante(nombre = '', codigo = '', stock = 0) {
+function crearFilaVariante(color = '', talle = '', codigo = '', stock = 0) {
     const div = document.createElement('div');
     div.className = 'variante-fila';
     div.innerHTML = `
-        <input type="text"   class="var-nombre" placeholder="Nombre variante" value="${nombre}">
+        <input type="text"   class="var-color"  placeholder="Color (opcional)" value="${color}">
+        <input type="text"   class="var-talle"  placeholder="Talle (opcional)" value="${talle}">
         <input type="text"   class="var-codigo" placeholder="Código de barras (opcional)" value="${codigo}">
         <input type="number" class="var-stock"  placeholder="Stock inicial" min="0" value="${stock}">
         <button type="button" class="btn-eliminar-var" title="Eliminar">&times;</button>
@@ -448,11 +450,12 @@ document.getElementById('np-guardar').addEventListener('click', () => {
     if (!nombre) { alert('El nombre es obligatorio.'); return; }
 
     const variantes = [];
-    document.querySelectorAll('.variante-fila').forEach(fila => {
-        const v = fila.querySelector('.var-nombre').value.trim();
-        const c = fila.querySelector('.var-codigo').value.trim();
-        const s = parseInt(fila.querySelector('.var-stock').value) || 0;
-        if (v) variantes.push({ nombre: v, codigo: c, stock: s });
+    document.querySelectorAll('#np-variantes-lista .variante-fila').forEach(fila => {
+        const color  = fila.querySelector('.var-color').value.trim();
+        const talle  = fila.querySelector('.var-talle').value.trim();
+        const codigo = fila.querySelector('.var-codigo').value.trim();
+        const stock  = parseInt(fila.querySelector('.var-stock').value) || 0;
+        variantes.push({ color, talle, codigo, stock });
     });
 
     if (variantes.length === 0) { alert('Agregá al menos una variante.'); return; }
@@ -525,12 +528,13 @@ const modalEditar   = document.getElementById('modal-editar');
 const btnCerrarEdit = document.getElementById('modal-editar-cerrar');
 const btnCancelEdit = document.getElementById('modal-editar-cancelar');
 
-function crearFilaVarianteEditar(id = '', nombre = '', codigo = '', stock = 0, activo = 1) {
+function crearFilaVarianteEditar(id = '', color = '', talle = '', codigo = '', stock = 0) {
     const div = document.createElement('div');
     div.className = 'variante-fila';
     div.innerHTML = `
         <input type="hidden" class="var-id" value="${id}">
-        <input type="text"   class="var-nombre" placeholder="Nombre variante" value="${nombre}">
+        <input type="text"   class="var-color"  placeholder="Color (opcional)"  value="${color}">
+        <input type="text"   class="var-talle"  placeholder="Talle (opcional)"  value="${talle}">
         <input type="text"   class="var-codigo" placeholder="Código de barras (opcional)" value="${codigo}">
         <input type="number" class="var-stock"  placeholder="Stock" min="0" value="${stock}" ${id ? 'disabled title="El stock se modifica desde Ingreso/Egreso"' : ''}>
         <button type="button" class="btn-eliminar-var" title="Eliminar">&times;</button>
@@ -559,10 +563,10 @@ function abrirModalEditar(btn) {
             lista.innerHTML = '';
             if (data.variantes && data.variantes.length > 0) {
                 data.variantes.forEach(v => {
-                    lista.appendChild(crearFilaVarianteEditar(v.id, v.nombre_variante, v.codigo_barras ?? '', v.stock_actual, v.activo));
+                    lista.appendChild(crearFilaVarianteEditar(v.id, v.color ?? '', v.talle ?? '', v.codigo_barras ?? '', v.stock_actual));
                 });
             } else {
-                lista.appendChild(crearFilaVarianteEditar('', 'unica', '', 0));
+                lista.appendChild(crearFilaVarianteEditar());
             }
         });
 
@@ -610,10 +614,11 @@ document.getElementById('ep-guardar').addEventListener('click', () => {
     const variantes = [];
     document.querySelectorAll('#ep-variantes-lista .variante-fila').forEach(fila => {
         const vid    = fila.querySelector('.var-id').value;
-        const vnombre = fila.querySelector('.var-nombre').value.trim();
+        const vcolor  = fila.querySelector('.var-color').value.trim();
+        const vtalle  = fila.querySelector('.var-talle').value.trim();
         const vcodigo = fila.querySelector('.var-codigo').value.trim();
         const vstock  = parseInt(fila.querySelector('.var-stock').value) || 0;
-        if (vnombre) variantes.push({ id: vid, nombre: vnombre, codigo: vcodigo, stock: vstock });
+        variantes.push({ id: vid, color: vcolor, talle: vtalle, codigo: vcodigo, stock: vstock });
     });
 
     if (variantes.length === 0) { alert('Agregá al menos una variante.'); return; }

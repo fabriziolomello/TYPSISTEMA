@@ -23,6 +23,13 @@ try {
     if (!$nombre)          throw new Exception('El nombre es obligatorio');
     if (empty($variantes)) throw new Exception('Debe tener al menos una variante');
 
+    function generarNombreVariante(?string $color, ?string $talle): string {
+        if ($color && $talle) return "$color / $talle";
+        if ($color)           return $color;
+        if ($talle)           return $talle;
+        return 'unica';
+    }
+
     $db   = new Database();
     $conn = $db->getConnection();
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -49,20 +56,31 @@ try {
     }
     $stmtLp->close();
 
-    // 3) Variantes
+    $idDeposito = (int)($_SESSION['usuario_deposito'] ?? 1);
+
+    // 3) Variantes + stock inicial en stock_deposito
     $stmtVar = $conn->prepare("
-        INSERT INTO producto_variante (id_producto, nombre_variante, codigo_barras, stock_actual)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO producto_variante (id_producto, nombre_variante, color, talle, codigo_barras, stock_actual)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    $stmtSd = $conn->prepare("
+        INSERT INTO stock_deposito (id_variante, id_deposito, stock_actual) VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE stock_actual = stock_actual
     ");
     foreach ($variantes as $v) {
-        $vNombre = trim($v['nombre'] ?? '');
+        $vColor  = trim($v['color'] ?? '') ?: null;
+        $vTalle  = trim($v['talle'] ?? '') ?: null;
         $vCodigo = trim($v['codigo'] ?? '') ?: null;
         $vStock  = (int)($v['stock'] ?? 0);
-        if (!$vNombre) continue;
-        $stmtVar->bind_param('issi', $idProducto, $vNombre, $vCodigo, $vStock);
+        $vNombre = generarNombreVariante($vColor, $vTalle);
+        $stmtVar->bind_param('issssi', $idProducto, $vNombre, $vColor, $vTalle, $vCodigo, $vStock);
         $stmtVar->execute();
+        $idVariante = $conn->insert_id;
+        $stmtSd->bind_param('iii', $idVariante, $idDeposito, $vStock);
+        $stmtSd->execute();
     }
     $stmtVar->close();
+    $stmtSd->close();
 
     $conn->commit();
 

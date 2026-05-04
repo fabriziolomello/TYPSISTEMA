@@ -14,7 +14,7 @@ try {
     $conn = $db->getConnection();
 
     $stmt = $conn->prepare("
-        SELECT id, nombre_variante, codigo_barras, stock_actual, activo
+        SELECT id, nombre_variante, color, talle, codigo_barras, stock_actual, activo
         FROM producto_variante
         WHERE id_producto = ?
         ORDER BY id ASC
