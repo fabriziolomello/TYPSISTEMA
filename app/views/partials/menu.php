@@ -22,6 +22,10 @@
             <li><a href="/TYPSISTEMA/app/views/base_datos/clientes.php">Clientes</a></li>
             <li><a href="/TYPSISTEMA/app/views/base_datos/proveedores.php">Proveedores</a></li>
 
+            <li class="menu-title">Tienda Nube</li>
+            <li><a href="/TYPSISTEMA/app/views/tiendanube/productos.php">Productos</a></li>
+            <li><a href="/TYPSISTEMA/app/views/tiendanube/ventas.php">Pedidos</a></li>
+
             <li class="menu-title">Configuración</li>
             <li><a href="/TYPSISTEMA/app/views/config/usuarios.php">Usuarios y permisos</a></li>
         </ul>

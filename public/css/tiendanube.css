@@ -1,0 +1,189 @@
+/* ========================
+   TIENDA NUBE
+   ======================== */
+
+.tn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tn-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tn-titulo { margin: 0; }
+
+/* Config card */
+.tn-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tn-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    user-select: none;
+}
+
+.tn-config-body {
+    padding: 16px;
+}
+
+.tn-config-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+/* Acciones */
+.tn-acciones {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.tn-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+}
+
+.tn-stat { color: #444; }
+.tn-stat--pendiente { color: #b45309; }
+
+/* Progress */
+.tn-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.tn-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.tn-progress-fill {
+    height: 100%;
+    background: var(--azul);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
+/* Tabla */
+.tn-tabla-wrapper { overflow-x: auto; }
+
+.tn-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tn-tabla th,
+.tn-tabla td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    text-align: left;
+}
+
+.tn-tabla th {
+    background: #f4f4f4;
+    font-weight: 600;
+}
+
+.col-monto { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Badges */
+.tn-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.tn-badge--publicado { background: #d4edda; color: #155724; }
+.tn-badge--pendiente { background: #fff3cd; color: #856404; }
+.tn-badge--paid      { background: #d4edda; color: #155724; }
+.tn-badge--unpaid    { background: #fff3cd; color: #856404; }
+.tn-badge--pending   { background: #fff3cd; color: #856404; }
+.tn-badge--shipped   { background: #d4edda; color: #155724; }
+.tn-badge--unshipped { background: #f5f5f5; color: #666; }
+
+/* Aviso */
+.tn-aviso {
+    padding: 12px 16px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.tn-aviso--error {
+    background: #fde8e8;
+    border-color: #f87171;
+    color: #b91c1c;
+}
+
+/* Botones (reutilizados del sistema) */
+.btn-primary {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: var(--azul);
+    color: var(--blanco);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+.btn-primary:hover { background-color: #0052a3; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--azul);
+    border: 1px solid var(--azul);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+.btn-link:hover { background: #e8f0fb; }
+.btn-link:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.modal-field label { font-size: 13px; font-weight: 600; color: #444; }
+.modal-field input,
+.modal-field select {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+.modal-field input:focus,
+.modal-field select:focus { border-color: var(--azul); outline: none; }

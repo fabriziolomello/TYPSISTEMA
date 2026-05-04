@@ -65,6 +65,16 @@ ob_start();
     <section class="pos-products">
         <div class="pos-header">
             <h1 class="pos-title">Nueva venta / Punto POS</h1>
+            <div class="pos-header-selects">
+                <select id="pos-tipo-venta" class="pos-select">
+                    <option value="MINORISTA">Minorista</option>
+                    <option value="MAYORISTA">Mayorista</option>
+                </select>
+                <select id="pos-lista-precios" class="pos-select">
+                    <option value="MINORISTA">Lista minorista</option>
+                    <option value="MAYORISTA">Lista mayorista</option>
+                </select>
+            </div>
         </div>
 
         <div class="pos-search-bar">
@@ -131,9 +141,6 @@ ob_start();
     <aside class="pos-summary">
         <header class="pos-summary-header">
             <h2 class="pos-summary-title">Resumen de la venta</h2>
-            <button type="button" class="pos-config-btn" id="pos-open-config" title="Configuración">
-                ⚙
-            </button>
         </header>
 
         <!-- BUSCADOR DE CLIENTE -->
@@ -223,38 +230,6 @@ ob_start();
 </div>
 
 <!-- MODAL CONFIGURACIÓN (TIPO VENTA + LISTA DE PRECIOS) -->
-<div class="pos-modal" id="pos-config-modal" aria-hidden="true">
-    <div class="pos-modal-backdrop" data-close-config></div>
-    <div class="pos-modal-dialog">
-        <header class="pos-modal-header">
-            <h3>Configuración de la venta</h3>
-            <button type="button" class="pos-modal-close" data-close-config>&times;</button>
-        </header>
-
-        <div class="pos-modal-body">
-            <div class="pos-field">
-                <label for="pos-tipo-venta" class="pos-label">Tipo de venta</label>
-                <select id="pos-tipo-venta" class="pos-select">
-                    <option value="MINORISTA">MINORISTA</option>
-                    <option value="MAYORISTA">MAYORISTA</option>
-                </select>
-            </div>
-
-            <div class="pos-field">
-                <label for="pos-lista-precios" class="pos-label">Lista de precios</label>
-                <select id="pos-lista-precios" class="pos-select">
-                    <option value="MINORISTA">Lista minorista</option>
-                    <option value="MAYORISTA">Lista mayorista</option>
-                </select>
-            </div>
-        </div>
-
-        <footer class="pos-modal-footer">
-            <button type="button" class="pos-btn-secondary" data-close-config>Cancelar</button>
-            <button type="button" class="pos-btn-primary" id="pos-save-config">Guardar cambios</button>
-        </footer>
-    </div>
-</div>
 
 <!-- MODAL PAGO / COBRO -->
 <div class="pos-modal" id="pos-payment-modal" aria-hidden="true">

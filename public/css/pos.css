@@ -12,20 +12,20 @@
     box-sizing: border-box;
 }
 
-/* Columna izquierda: productos (~70%) */
+/* Columna izquierda: productos (~64%) */
 .pos-products {
-    flex: 7;
+    flex: 64;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-/* Columna derecha: resumen (~30%) */
+/* Columna derecha: resumen (~36%, 20% más ancha que antes) */
 .pos-summary {
-    flex: 3;
-    min-width: 320px;
-    max-width: 420px;
+    flex: 36;
+    min-width: 380px;
+    max-width: 504px;
     background-color: #ffffff;
     border-radius: 10px;
     padding: 1rem;
@@ -33,9 +33,10 @@
     box-sizing: border-box;
     position: sticky;
     top: 1rem;
-    display: flex;              /* columna vertical */
+    display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 2rem);
+    height: calc(100vh - 60px - 2rem);
+    overflow: hidden;
 }
 
 /* =========================
@@ -43,6 +44,10 @@
    ========================= */
 
 .pos-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     margin-bottom: 0.5rem;
 }
 
@@ -50,6 +55,28 @@
     font-size: 1.4rem;
     font-weight: 600;
     margin: 0;
+    white-space: nowrap;
+}
+
+.pos-header-selects {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.pos-header-selects .pos-select {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #fff;
+    cursor: pointer;
+    color: #374151;
+}
+
+.pos-header-selects .pos-select:focus {
+    outline: none;
+    border-color: #2563eb;
 }
 
 /* =========================
@@ -242,6 +269,7 @@
 
 .pos-cart {
     flex: 1;
+    min-height: 0;              /* necesario para que flex + overflow funcione */
     margin-bottom: 0.75rem;
     display: flex;
     flex-direction: column;
@@ -302,16 +330,17 @@
 .pos-cart-remove {
     border: none;
     background-color: transparent;
-    color: #9ca3af;
     cursor: pointer;
-    font-size: 1rem;
-    padding: 0;
-    transition: color 0.15s ease, transform 0.1s ease;
+    font-size: 1.4rem;
+    padding: 2px 4px;
+    line-height: 1;
+    opacity: 0.45;
+    transition: opacity 0.15s ease, transform 0.1s ease;
 }
 
 .pos-cart-remove:hover {
-    color: #ef4444;
-    transform: scale(1.1);
+    opacity: 1;
+    transform: scale(1.15);
 }
 
 /* Segunda fila: Cant / Precio / Descuento */
@@ -376,8 +405,8 @@
 .pos-totals {
     border-top: 1px solid #e5e7eb;
     padding-top: 0.6rem;
-    margin-top: auto;          /* empuja este bloque al fondo del aside */
-    margin-bottom: 0.7rem;
+    padding-bottom: 0.4rem;
+    flex-shrink: 0;             /* nunca se comprime ni scrollea */
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -400,6 +429,7 @@
 
 .pos-sell-btn {
     width: 100%;
+    flex-shrink: 0;             /* fijo abajo, nunca se empuja fuera */
     border: none;
     border-radius: 999px;
     padding: 0.65rem 0.9rem;

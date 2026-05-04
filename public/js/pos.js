@@ -206,7 +206,8 @@ function renderCarrito() {
                     type="button"
                     class="pos-cart-remove"
                     data-id="${item.idVariante}"
-                >&times;</button>
+                    title="Eliminar"
+                >🗑</button>
             </div>
 
             <div class="pos-cart-row">
@@ -302,39 +303,21 @@ function initBuscadorProductos() {
 }
 
 // =========================
-// Configuración
+// Selects de configuración en el header (tiempo real)
 // =========================
-function abrirConfigModal() {
-    document.body.classList.add("pos-modal-open");
-    const modal = document.getElementById("pos-config-modal");
-    modal.classList.add("pos-modal--open");
-}
-
-function cerrarConfigModal() {
-    document.body.classList.remove("pos-modal-open");
-    const modal = document.getElementById("pos-config-modal");
-    modal.classList.remove("pos-modal--open");
+function initConfigSelects() {
+    const selLista = document.getElementById("pos-lista-precios");
+    if (selLista) {
+        selLista.addEventListener("change", () => {
+            listaPreciosActual = selLista.value;
+            actualizarPreciosPorLista(selLista.value);
+        });
+    }
 }
 
 function initConfigModal() {
-    const btnOpen = document.getElementById("pos-open-config");
-    const modal = document.getElementById("pos-config-modal");
-    const btnSave = document.getElementById("pos-save-config");
-
-    btnOpen.addEventListener("click", abrirConfigModal);
-    modal.querySelectorAll("[data-close-config]").forEach((el) =>
-        el.addEventListener("click", cerrarConfigModal)
-    );
-
-    btnSave.addEventListener("click", () => {
-        const tipoVenta = document.getElementById("pos-tipo-venta").value;
-        const listaPrecios = document.getElementById("pos-lista-precios").value;
-
-        listaPreciosActual = listaPrecios;
-
-        actualizarPreciosPorLista(listaPrecios);
-        cerrarConfigModal();
-    });
+    // Mantenemos el nombre por compatibilidad, ahora solo inicializa los selects
+    initConfigSelects();
 }
 
 // =========================
