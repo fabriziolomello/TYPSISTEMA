@@ -29,6 +29,13 @@ while ($row = $res->fetch_assoc()) {
     $variantes[] = $row;
 }
 
+// Stock por depósito para cada variante
+$sdRes = $conn->query("SELECT id_variante, id_deposito, stock_actual FROM stock_deposito");
+$stockDeposito = [];
+while ($row = $sdRes->fetch_assoc()) {
+    $stockDeposito[(int)$row['id_variante']][(int)$row['id_deposito']] = (int)$row['stock_actual'];
+}
+
 $hoy       = date('Y-m-d');
 $BASE      = "/TYPSISTEMA";
 $depositos = $conn->query("SELECT id, nombre FROM deposito ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
@@ -103,14 +110,16 @@ ob_start();
                     <th>Código</th>
                     <th>Producto</th>
                     <th>Variante</th>
+                    <th>Stock actual</th>
                     <th>Tipo</th>
                     <th>Cantidad</th>
+                    <th>Stock final</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody id="mov-tbody">
                 <tr id="mov-fila-vacia">
-                    <td colspan="6">No hay productos agregados.</td>
+                    <td colspan="8">No hay productos agregados.</td>
                 </tr>
             </tbody>
         </table>
@@ -125,23 +134,39 @@ ob_start();
 </div>
 
 <script>
-const variantes = <?= json_encode($variantes) ?>;
+const variantes    = <?= json_encode($variantes) ?>;
+const stockDep     = <?= json_encode($stockDeposito) ?>;
 let items = [];
 let varianteSeleccionada = null;
 
 const inputCodigo  = document.getElementById('mov-codigo');
 const inputBuscar  = document.getElementById('mov-buscar');
 const sugerencias  = document.getElementById('mov-sugerencias');
+const selDeposito  = document.getElementById('mov-deposito');
+
+function getStockActual(id_variante) {
+    const dep = parseInt(selDeposito.value);
+    return (stockDep[id_variante] && stockDep[id_variante][dep] !== undefined)
+        ? stockDep[id_variante][dep]
+        : 0;
+}
+
+function calcStockFinal(stockActual, tipo, cantidad) {
+    if (tipo === 'INGRESO' || tipo === 'AJUSTE_POSITIVO') return stockActual + cantidad;
+    if (tipo === 'EGRESO'  || tipo === 'AJUSTE_NEGATIVO') return stockActual - cantidad;
+    return stockActual;
+}
+
+function esAjuste(tipo) {
+    return tipo === 'AJUSTE_POSITIVO' || tipo === 'AJUSTE_NEGATIVO';
+}
 
 // =====================
 // Buscador por nombre
 // =====================
 function mostrarSugerencias(lista) {
     sugerencias.innerHTML = '';
-    if (lista.length === 0) {
-        sugerencias.style.display = 'none';
-        return;
-    }
+    if (lista.length === 0) { sugerencias.style.display = 'none'; return; }
     lista.slice(0, 8).forEach(v => {
         const div = document.createElement('div');
         div.className = 'mov-sugerencia-item';
@@ -170,8 +195,7 @@ inputBuscar.addEventListener('input', () => {
     if (!q) { sugerencias.style.display = 'none'; return; }
     const palabras = q.split(/\s+/);
     const texto = v => (v.nombre_producto + ' ' + v.nombre_variante).toLowerCase();
-    const filtradas = variantes.filter(v => palabras.every(p => texto(v).includes(p)));
-    mostrarSugerencias(filtradas);
+    mostrarSugerencias(variantes.filter(v => palabras.every(p => texto(v).includes(p))));
 });
 
 // =====================
@@ -182,39 +206,35 @@ inputCodigo.addEventListener('input', () => {
     const q = inputCodigo.value.trim();
     if (!q) { sugerencias.style.display = 'none'; return; }
     const filtradas = variantes.filter(v => v.codigo_barras && v.codigo_barras.includes(q));
-    if (filtradas.length === 1) {
-        seleccionarVariante(filtradas[0]);
-    } else {
-        mostrarSugerencias(filtradas);
-    }
+    if (filtradas.length === 1) seleccionarVariante(filtradas[0]);
+    else mostrarSugerencias(filtradas);
 });
 
 document.addEventListener('click', e => {
-    if (!sugerencias.contains(e.target) && e.target !== inputBuscar) {
+    if (!sugerencias.contains(e.target) && e.target !== inputBuscar)
         sugerencias.style.display = 'none';
-    }
+});
+
+// =====================
+// Cuando cambia depósito: actualizar stock_actual de todos los items
+// =====================
+selDeposito.addEventListener('change', () => {
+    items.forEach(item => { item.stock_actual = getStockActual(item.id_variante); });
+    renderTabla();
 });
 
 // =====================
 // Agregar item
 // =====================
 document.getElementById('mov-agregar').addEventListener('click', () => {
-    if (!varianteSeleccionada) {
-        alert('Seleccioná un producto primero.');
-        return;
-    }
+    if (!varianteSeleccionada) { alert('Seleccioná un producto primero.'); return; }
     const cantidad = parseInt(document.getElementById('mov-cantidad').value) || 0;
-    if (cantidad <= 0) {
-        alert('La cantidad debe ser mayor a 0.');
-        return;
-    }
+    if (cantidad <= 0) { alert('La cantidad debe ser mayor a 0.'); return; }
     const tipo = document.getElementById('mov-tipo').value;
 
-    // Si ya existe el mismo variante + tipo, suma cantidad
     const existe = items.find(i => i.id_variante === varianteSeleccionada.id_variante && i.tipo === tipo);
     if (existe) {
         existe.cantidad += cantidad;
-        renderTabla();
     } else {
         items.push({
             id_variante:     varianteSeleccionada.id_variante,
@@ -222,10 +242,11 @@ document.getElementById('mov-agregar').addEventListener('click', () => {
             nombre_producto: varianteSeleccionada.nombre_producto,
             nombre_variante: varianteSeleccionada.nombre_variante,
             tipo,
-            cantidad
+            cantidad,
+            stock_actual:    getStockActual(varianteSeleccionada.id_variante)
         });
-        renderTabla();
     }
+    renderTabla();
 
     varianteSeleccionada = null;
     inputBuscar.value    = '';
@@ -240,14 +261,10 @@ document.getElementById('mov-agregar').addEventListener('click', () => {
 function renderTabla() {
     const tbody      = document.getElementById('mov-tbody');
     const btnGuardar = document.getElementById('mov-guardar');
-
-    tbody.innerHTML = '';
+    tbody.innerHTML  = '';
 
     if (items.length === 0) {
-        const tr = document.createElement('tr');
-        tr.id = 'mov-fila-vacia';
-        tr.innerHTML = '<td colspan="6">No hay productos agregados.</td>';
-        tbody.appendChild(tr);
+        tbody.innerHTML = '<tr><td colspan="8">No hay productos agregados.</td></tr>';
         btnGuardar.disabled = true;
         return;
     }
@@ -255,19 +272,58 @@ function renderTabla() {
     btnGuardar.disabled = false;
 
     items.forEach((item, idx) => {
-        const variante = item.nombre_variante === 'unica' ? '-' : item.nombre_variante;
+        const variante    = item.nombre_variante === 'unica' ? '-' : item.nombre_variante;
+        const stockFinal  = calcStockFinal(item.stock_actual, item.tipo, item.cantidad);
+        const sfEditable  = esAjuste(item.tipo);
+        const sfClass     = stockFinal < 0 ? 'stock-negativo' : '';
+
         const tr = document.createElement('tr');
+        tr.dataset.idx = idx;
         tr.innerHTML = `
             <td>${item.codigo}</td>
             <td>${item.nombre_producto}</td>
             <td>${variante}</td>
+            <td class="col-centro"><strong>${item.stock_actual}</strong></td>
             <td>${item.tipo}</td>
-            <td>${item.cantidad}</td>
+            <td><input type="number" class="item-cantidad mov-input-num" value="${item.cantidad}" min="1" data-idx="${idx}"></td>
+            <td>
+                <input type="number" class="item-stock-final mov-input-num ${sfClass}" value="${stockFinal}"
+                    data-idx="${idx}" ${sfEditable ? '' : 'readonly tabindex="-1"'}>
+            </td>
             <td><button type="button" class="btn-eliminar" data-idx="${idx}">&times;</button></td>
         `;
         tbody.appendChild(tr);
     });
 }
+
+// =====================
+// Editar cantidad / stock final en tabla
+// =====================
+document.getElementById('mov-tbody').addEventListener('input', e => {
+    const idx = parseInt(e.target.dataset.idx);
+    if (isNaN(idx)) return;
+    const item = items[idx];
+
+    if (e.target.classList.contains('item-cantidad')) {
+        item.cantidad = Math.max(0, parseInt(e.target.value) || 0);
+    } else if (e.target.classList.contains('item-stock-final') && esAjuste(item.tipo)) {
+        const sf = parseInt(e.target.value) ?? item.stock_actual;
+        if (item.tipo === 'AJUSTE_POSITIVO') item.cantidad = Math.max(0, sf - item.stock_actual);
+        if (item.tipo === 'AJUSTE_NEGATIVO') item.cantidad = Math.max(0, item.stock_actual - sf);
+    }
+
+    // Re-render solo la fila afectada
+    const stockFinal = calcStockFinal(item.stock_actual, item.tipo, item.cantidad);
+    const tr = e.target.closest('tr');
+    const inputCant = tr.querySelector('.item-cantidad');
+    const inputSF   = tr.querySelector('.item-stock-final');
+    if (e.target.classList.contains('item-stock-final')) {
+        inputCant.value = item.cantidad;
+    } else {
+        inputSF.value = stockFinal;
+    }
+    inputSF.classList.toggle('stock-negativo', stockFinal < 0);
+});
 
 document.getElementById('mov-tbody').addEventListener('click', e => {
     if (e.target.classList.contains('btn-eliminar')) {
@@ -280,16 +336,24 @@ document.getElementById('mov-tbody').addEventListener('click', e => {
 // Guardar
 // =====================
 document.getElementById('mov-guardar').addEventListener('click', () => {
-    const fecha        = document.getElementById('mov-fecha').value;
+    const fecha         = document.getElementById('mov-fecha').value;
     const observaciones = document.getElementById('mov-observaciones').value;
 
-    if (!fecha)          { alert('Ingresá una fecha.'); return; }
+    if (!fecha)             { alert('Ingresá una fecha.'); return; }
     if (items.length === 0) { alert('Agregá al menos un producto.'); return; }
+
+    const itemsConCantidad = items.filter(i => i.cantidad > 0);
+    if (itemsConCantidad.length === 0) { alert('Al menos un item debe tener cantidad mayor a 0.'); return; }
 
     fetch('/TYPSISTEMA/app/controllers/stock/movimientos/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fecha, observaciones, items, id_deposito: parseInt(document.getElementById('mov-deposito').value) })
+        body: JSON.stringify({
+            fecha,
+            observaciones,
+            items: itemsConCantidad,
+            id_deposito: parseInt(selDeposito.value)
+        })
     })
     .then(r => r.json())
     .then(data => {

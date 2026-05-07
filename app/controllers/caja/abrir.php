@@ -15,8 +15,10 @@ try {
     $saldoInicial = (float)($data['saldo_inicial'] ?? 0);
     $observaciones = trim($data['observaciones'] ?? '');
 
-    $idUsuario = $_SESSION['usuario_id'] ?? null;
+    $idUsuario  = $_SESSION['usuario_id'] ?? null;
     if (!$idUsuario) throw new Exception('Sin sesión activa');
+
+    $idSucursal = (int)($_SESSION['usuario_deposito'] ?? 1);
 
     $db   = new Database();
     $conn = $db->getConnection();
@@ -24,18 +26,21 @@ try {
 
     $conn->begin_transaction();
 
-    // Verificar que no haya caja abierta
-    $res = $conn->query("SELECT id FROM caja WHERE estado = 'ABIERTA' LIMIT 1");
-    if ($res->num_rows > 0) {
+    // Verificar que no haya caja abierta para esta sucursal
+    $stmtCheck = $conn->prepare("SELECT id FROM caja WHERE estado = 'ABIERTA' AND id_sucursal = ? LIMIT 1");
+    $stmtCheck->bind_param('i', $idSucursal);
+    $stmtCheck->execute();
+    if ($stmtCheck->get_result()->num_rows > 0) {
         throw new Exception('Ya hay una caja abierta');
     }
+    $stmtCheck->close();
 
     // Insertar apertura
     $stmt = $conn->prepare("
-        INSERT INTO caja (fecha, id_usuario_apertura, saldo_inicial, estado, observaciones)
-        VALUES (CURDATE(), ?, ?, 'ABIERTA', ?)
+        INSERT INTO caja (id_sucursal, fecha, id_usuario_apertura, saldo_inicial, estado, observaciones)
+        VALUES (?, CURDATE(), ?, ?, 'ABIERTA', ?)
     ");
-    $stmt->bind_param('ids', $idUsuario, $saldoInicial, $observaciones);
+    $stmt->bind_param('iids', $idSucursal, $idUsuario, $saldoInicial, $observaciones);
     $stmt->execute();
     $stmt->close();
 

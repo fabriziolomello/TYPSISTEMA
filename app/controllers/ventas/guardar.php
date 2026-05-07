@@ -63,12 +63,12 @@ try {
     $idDeposito = (int)($_SESSION['usuario_deposito'] ?? 1);
 
     // -------------------------
-    // 4) Caja abierta
+    // 4) Caja abierta (de esta sucursal)
     // -------------------------
     $sqlCaja = "
         SELECT id
         FROM caja
-        WHERE estado = 'ABIERTA'
+        WHERE estado = 'ABIERTA' AND id_sucursal = $idDeposito
         ORDER BY fecha DESC
         LIMIT 1
     ";
@@ -121,16 +121,17 @@ try {
     // -------------------------
     $stmtVenta = $mysqli->prepare("
         INSERT INTO ventas
-            (fecha_hora, id_usuario, id_cliente, id_caja, tipo_venta, total, estado_pago, observaciones)
+            (fecha_hora, id_usuario, id_cliente, id_caja, id_sucursal, tipo_venta, total, estado_pago, observaciones)
         VALUES
-            (NOW(), ?, ?, ?, ?, ?, ?, ?)
+            (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmtVenta->bind_param(
-        'iiisdss',
+        'iiiisdss',
         $idUsuario,
         $idCliente,
         $idCaja,
+        $idDeposito,
         $tipo_venta,
         $total_venta,
         $estado_pago,

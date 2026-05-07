@@ -1,3 +1,9 @@
+<?php
+$_menuRol     = $_SESSION['usuario_rol']      ?? '';
+$_menuDep     = (int)($_SESSION['usuario_deposito'] ?? 0);
+$_menuEsAdmin = $_menuRol === 'ADMIN';
+$_menuVerTN   = $_menuEsAdmin || $_menuDep === 1;
+?>
 <aside id="sidebar" class="sidebar">
     <nav>
         <ul>
@@ -22,12 +28,25 @@
             <li><a href="/TYPSISTEMA/app/views/base_datos/clientes.php">Clientes</a></li>
             <li><a href="/TYPSISTEMA/app/views/base_datos/proveedores.php">Proveedores</a></li>
 
+            <?php if ($_menuVerTN): ?>
             <li class="menu-title">Tienda Nube</li>
             <li><a href="/TYPSISTEMA/app/views/tiendanube/productos.php">Productos</a></li>
             <li><a href="/TYPSISTEMA/app/views/tiendanube/ventas.php">Pedidos</a></li>
+            <?php endif; ?>
 
+            <?php if ($_menuEsAdmin): ?>
+            <li class="menu-title">Informes</li>
+            <li><a href="/TYPSISTEMA/app/views/informes/ventas.php">Ventas por período</a></li>
+            <li><a href="/TYPSISTEMA/app/views/informes/ventas_producto.php">Ventas por producto</a></li>
+            <li><a href="/TYPSISTEMA/app/views/informes/stock.php">Stock actual</a></li>
+            <li><a href="/TYPSISTEMA/app/views/informes/movimientos.php">Movimientos de stock</a></li>
+            <li><a href="/TYPSISTEMA/app/views/informes/caja.php">Informe de caja</a></li>
+            <?php endif; ?>
+
+            <?php if ($_menuEsAdmin): ?>
             <li class="menu-title">Configuración</li>
             <li><a href="/TYPSISTEMA/app/views/config/usuarios.php">Usuarios y permisos</a></li>
+            <?php endif; ?>
         </ul>
     </nav>
 </aside>

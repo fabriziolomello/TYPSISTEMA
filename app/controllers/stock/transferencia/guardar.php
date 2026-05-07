@@ -22,8 +22,14 @@ try {
     if ($idOrigen === $idDestino) throw new Exception('El origen y destino no pueden ser el mismo');
     if (empty($items)) throw new Exception('No hay productos');
 
-    $idUsuario = $_SESSION['usuario_id'] ?? null;
+    $idUsuario  = $_SESSION['usuario_id'] ?? null;
     if (!$idUsuario) throw new Exception('Sin sesión activa');
+
+    $esAdmin    = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
+    $depUsuario = (int)($_SESSION['usuario_deposito'] ?? 0);
+    if (!$esAdmin && $idOrigen !== $depUsuario) {
+        throw new Exception('Solo podés transferir desde tu propio depósito');
+    }
 
     $db   = new Database();
     $conn = $db->getConnection();

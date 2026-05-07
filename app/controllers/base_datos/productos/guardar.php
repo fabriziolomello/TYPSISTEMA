@@ -11,14 +11,15 @@ try {
     $data = json_decode($raw, true);
     if (!$data) throw new Exception('JSON inválido');
 
-    $nombre    = trim($data['nombre'] ?? '');
-    $codigo    = trim($data['codigo'] ?? '') ?: null;
-    $categoria = $data['categoria'] ? (int)$data['categoria'] : null;
-    $proveedor = $data['proveedor'] ? (int)$data['proveedor'] : null;
-    $costo     = (float)($data['costo']     ?? 0);
-    $minorista = (float)($data['minorista'] ?? 0);
-    $mayorista = (float)($data['mayorista'] ?? 0);
-    $variantes = $data['variantes'] ?? [];
+    $nombre       = trim($data['nombre'] ?? '');
+    $codigo       = trim($data['codigo'] ?? '') ?: null;
+    $categoria    = $data['categoria']    ? (int)$data['categoria']    : null;
+    $subcategoria = $data['subcategoria'] ? (int)$data['subcategoria'] : null;
+    $proveedor    = $data['proveedor']    ? (int)$data['proveedor']    : null;
+    $costo        = (float)($data['costo']     ?? 0);
+    $minorista    = (float)($data['minorista'] ?? 0);
+    $mayorista    = (float)($data['mayorista'] ?? 0);
+    $variantes    = $data['variantes'] ?? [];
 
     if (!$nombre)          throw new Exception('El nombre es obligatorio');
     if (empty($variantes)) throw new Exception('Debe tener al menos una variante');
@@ -38,10 +39,10 @@ try {
 
     // 1) Insertar producto
     $stmt = $conn->prepare("
-        INSERT INTO productos (nombre, codigo_barras, precio_costo, id_categoria, id_proveedor)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO productos (nombre, codigo_barras, precio_costo, id_categoria, id_subcategoria, id_proveedor)
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param('ssdii', $nombre, $codigo, $costo, $categoria, $proveedor);
+    $stmt->bind_param('ssdiii', $nombre, $codigo, $costo, $categoria, $subcategoria, $proveedor);
     $stmt->execute();
     $idProducto = $conn->insert_id;
     $stmt->close();

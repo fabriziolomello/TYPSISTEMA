@@ -10,8 +10,18 @@ require_once __DIR__ . '/../../../config/database.php';
 $db   = new Database();
 $conn = $db->getConnection();
 
-$depositos = $conn->query("SELECT id, nombre FROM deposito ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
+$esAdmin    = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 $depUsuario = (int)($_SESSION['usuario_deposito'] ?? 1);
+
+$depositos = $conn->query("SELECT id, nombre FROM deposito ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
+$depMap2   = array_column($depositos, 'nombre', 'id');
+
+// Para no-admin: origen fijo al propio depósito, destino al otro
+$depOrigenFijo  = $depUsuario;
+$depDestinoFijo = 0;
+foreach ($depositos as $d) {
+    if ((int)$d['id'] !== $depUsuario) { $depDestinoFijo = (int)$d['id']; break; }
+}
 
 $variantes = $conn->query("
     SELECT
@@ -92,6 +102,7 @@ ob_start();
             </div>
             <div class="mov-field">
                 <label>Origen</label>
+                <?php if ($esAdmin): ?>
                 <select id="mov-origen">
                     <?php foreach ($depositos as $d): ?>
                         <option value="<?= $d['id'] ?>" <?= (int)$d['id'] === $depUsuario ? 'selected' : '' ?>>
@@ -99,9 +110,14 @@ ob_start();
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <?php else: ?>
+                <input type="hidden" id="mov-origen" value="<?= $depOrigenFijo ?>">
+                <input type="text" value="<?= htmlspecialchars($depMap2[$depOrigenFijo] ?? '') ?>" disabled style="background:#f4f4f4;cursor:not-allowed;">
+                <?php endif; ?>
             </div>
             <div class="mov-field">
                 <label>Destino</label>
+                <?php if ($esAdmin): ?>
                 <select id="mov-destino">
                     <?php foreach ($depositos as $d): ?>
                         <option value="<?= $d['id'] ?>" <?= (int)$d['id'] !== $depUsuario ? 'selected' : '' ?>>
@@ -109,6 +125,10 @@ ob_start();
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <?php else: ?>
+                <input type="hidden" id="mov-destino" value="<?= $depDestinoFijo ?>">
+                <input type="text" value="<?= htmlspecialchars($depMap2[$depDestinoFijo] ?? '') ?>" disabled style="background:#f4f4f4;cursor:not-allowed;">
+                <?php endif; ?>
             </div>
             <div class="mov-field mov-field--obs">
                 <label>Observaciones</label>
@@ -344,15 +364,17 @@ document.getElementById('mov-guardar').addEventListener('click', () => {
     btn.disabled = true;
     btn.textContent = 'Guardando...';
 
+    const payload = { fecha, observaciones, id_origen: idOrigen, id_destino: idDestino, items };
+
     fetch('/TYPSISTEMA/app/controllers/stock/transferencia/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fecha, observaciones, id_origen: idOrigen, id_destino: idDestino, items })
+        body: JSON.stringify(payload)
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            window.location.reload();
+            mostrarModalTransferencia(payload);
         } else {
             alert('Error: ' + data.error);
             btn.disabled = false;
@@ -360,6 +382,98 @@ document.getElementById('mov-guardar').addEventListener('click', () => {
         }
     });
 });
+
+const nombreDeposito = <?= json_encode($depMap2) ?>;
+
+function mostrarModalTransferencia(payload) {
+    const origen  = nombreDeposito[payload.id_origen]  || payload.id_origen;
+    const destino = nombreDeposito[payload.id_destino] || payload.id_destino;
+    const fecha   = payload.fecha.split('-').reverse().join('/');
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:8px;padding:28px 32px;max-width:520px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,.2);">
+            <h2 style="margin:0 0 16px;font-size:18px;">Transferencia registrada</h2>
+            <p style="margin:0 0 4px;font-size:14px;color:#555;">${fecha} · <strong>${origen} → ${destino}</strong></p>
+            ${payload.observaciones ? `<p style="margin:0 0 12px;font-size:13px;color:#888;">${payload.observaciones}</p>` : '<div style="margin-bottom:12px"></div>'}
+            <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+                <thead>
+                    <tr style="background:#f4f4f4;">
+                        <th style="text-align:left;padding:6px 8px;border:1px solid #ddd;">Producto</th>
+                        <th style="text-align:center;padding:6px 8px;border:1px solid #ddd;">Cant.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${payload.items.map(it => {
+                        const variante = it.nombre_variante && it.nombre_variante.toLowerCase() !== 'unica'
+                            ? ' <span style="color:#666;">(' + it.nombre_variante + ')</span>' : '';
+                        return `<tr>
+                            <td style="padding:5px 8px;border:1px solid #ddd;">${it.nombre_producto}${variante}</td>
+                            <td style="padding:5px 8px;border:1px solid #ddd;text-align:center;">${it.cantidad}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button id="btn-imprimir-transf" style="padding:8px 18px;background:#1a56db;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Imprimir</button>
+                <button id="btn-cerrar-transf"   style="padding:8px 18px;background:#f4f4f4;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:14px;">Cerrar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('btn-cerrar-transf').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        window.location.reload();
+    });
+
+    document.getElementById('btn-imprimir-transf').addEventListener('click', () => {
+        imprimirTransferencia(payload, origen, destino, fecha);
+    });
+}
+
+function imprimirTransferencia(payload, origen, destino, fecha) {
+    const filas = payload.items.map(it => {
+        const variante = it.nombre_variante && it.nombre_variante.toLowerCase() !== 'unica'
+            ? ' (' + it.nombre_variante + ')' : '';
+        return `<tr><td>${it.nombre_producto}${variante}</td><td style="text-align:center;">${it.cantidad}</td></tr>`;
+    }).join('');
+
+    const obs = payload.observaciones ? `<p style="margin:4px 0;color:#555;">Observaciones: ${payload.observaciones}</p>` : '';
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Transferencia</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 13px; padding: 24px; }
+        h2 { margin: 0 0 8px; }
+        p { margin: 2px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #ccc; padding: 6px 10px; }
+        th { background: #f4f4f4; }
+        .header { margin-bottom: 16px; }
+        @media print { button { display: none; } }
+    </style></head><body>
+    <div class="header">
+        <h2>Transferencia de stock</h2>
+        <p><strong>Fecha:</strong> ${fecha}</p>
+        <p><strong>Origen:</strong> ${origen} &nbsp;→&nbsp; <strong>Destino:</strong> ${destino}</p>
+        ${obs}
+    </div>
+    <table>
+        <thead><tr><th style="text-align:left;">Producto / Variante</th><th style="text-align:center;">Cantidad</th></tr></thead>
+        <tbody>${filas}</tbody>
+    </table>
+    <br><br>
+    <p style="margin-top:32px;">Firma: ____________________________</p>
+    <script>window.onload = () => { window.print(); }<\/script>
+    </body></html>`;
+
+    const w = window.open('', '_blank', 'width=700,height=600');
+    w.document.write(html);
+    w.document.close();
+}
 </script>
 
 <?php

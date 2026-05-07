@@ -6,6 +6,11 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
 
+if (($_SESSION['usuario_rol'] ?? '') !== 'ADMIN') {
+    header('Location: /TYPSISTEMA/app/views/dashboard/index.php');
+    exit;
+}
+
 if (!isset($_GET['id'])) {
     die("ID de venta inválido.");
 }

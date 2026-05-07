@@ -6,6 +6,13 @@ $css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/tiendanube.css
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
+
+$_esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
+$_dep     = (int)($_SESSION['usuario_deposito'] ?? 0);
+if (!$_esAdmin && $_dep !== 1) {
+    header('Location: /TYPSISTEMA/app/views/dashboard/index.php');
+    exit;
+}
 require_once __DIR__ . '/../../controllers/tiendanube/api.php';
 
 $db   = new Database();

@@ -12,14 +12,15 @@ try {
     if (!$data) throw new Exception('JSON inválido');
 
     $id        = (int)($data['id'] ?? 0);
-    $nombre    = trim($data['nombre'] ?? '');
-    $codigo    = trim($data['codigo'] ?? '') ?: null;
-    $categoria = $data['categoria'] ? (int)$data['categoria'] : null;
-    $proveedor = $data['proveedor'] ? (int)$data['proveedor'] : null;
-    $costo     = (float)($data['costo']     ?? 0);
-    $minorista = (float)($data['minorista'] ?? 0);
-    $mayorista = (float)($data['mayorista'] ?? 0);
-    $variantes = $data['variantes'] ?? [];
+    $nombre       = trim($data['nombre'] ?? '');
+    $codigo       = trim($data['codigo'] ?? '') ?: null;
+    $categoria    = $data['categoria']    ? (int)$data['categoria']    : null;
+    $subcategoria = $data['subcategoria'] ? (int)$data['subcategoria'] : null;
+    $proveedor    = $data['proveedor']    ? (int)$data['proveedor']    : null;
+    $costo        = (float)($data['costo']     ?? 0);
+    $minorista    = (float)($data['minorista'] ?? 0);
+    $mayorista    = (float)($data['mayorista'] ?? 0);
+    $variantes    = $data['variantes'] ?? [];
 
     if ($id <= 0)  throw new Exception('ID inválido');
     if (!$nombre)  throw new Exception('El nombre es obligatorio');
@@ -40,10 +41,10 @@ try {
     // Actualizar producto
     $stmt = $conn->prepare("
         UPDATE productos
-        SET nombre = ?, codigo_barras = ?, precio_costo = ?, id_categoria = ?, id_proveedor = ?
+        SET nombre = ?, codigo_barras = ?, precio_costo = ?, id_categoria = ?, id_subcategoria = ?, id_proveedor = ?
         WHERE id = ?
     ");
-    $stmt->bind_param('ssdiii', $nombre, $codigo, $costo, $categoria, $proveedor, $id);
+    $stmt->bind_param('ssdiiii', $nombre, $codigo, $costo, $categoria, $subcategoria, $proveedor, $id);
     $stmt->execute();
     $stmt->close();
 

@@ -10,23 +10,34 @@ require_once __DIR__ . '/../../config/database.php';
 $db   = new Database();
 $conn = $db->getConnection();
 
-// ¿Hay una caja abierta?
-$resAbierta = $conn->query("SELECT id FROM caja WHERE estado = 'ABIERTA' LIMIT 1");
-$cajaAbierta = $resAbierta->num_rows > 0;
+$idSucursal = (int)($_SESSION['usuario_deposito'] ?? 1);
 
-// Saldo inicial de efectivo = total_real de efectivo de la última caja cerrada
+// ¿Hay una caja abierta para esta sucursal?
+$stmtAbierta = $conn->prepare("SELECT id FROM caja WHERE estado = 'ABIERTA' AND id_sucursal = ? LIMIT 1");
+$stmtAbierta->bind_param('i', $idSucursal);
+$stmtAbierta->execute();
+$resAbierta  = $stmtAbierta->get_result();
+$cajaAbierta = $resAbierta->num_rows > 0;
+$stmtAbierta->close();
+
+// Saldo inicial de efectivo = total_real de efectivo de la última caja cerrada de esta sucursal
 $saldoEfectivo = 0;
 
 if (!$cajaAbierta) {
-    $resUltima = $conn->query("
+    $stmtUltima = $conn->prepare("
         SELECT ccd.total_real
         FROM caja c
         INNER JOIN caja_cierre_detalle ccd ON ccd.id_caja = c.id
         WHERE c.estado = 'CERRADA'
+          AND c.id_sucursal = ?
           AND ccd.medio_pago = 'EFECTIVO'
         ORDER BY c.fecha DESC, c.id DESC
         LIMIT 1
     ");
+    $stmtUltima->bind_param('i', $idSucursal);
+    $stmtUltima->execute();
+    $resUltima = $stmtUltima->get_result();
+    $stmtUltima->close();
     if ($resUltima && $resUltima->num_rows > 0) {
         $saldoEfectivo = (float)$resUltima->fetch_assoc()['total_real'];
     }

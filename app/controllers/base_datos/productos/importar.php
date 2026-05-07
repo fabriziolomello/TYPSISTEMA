@@ -37,8 +37,8 @@ try {
 
     // Statements reutilizables
     $stmtProd = $conn->prepare("
-        INSERT INTO productos (nombre, codigo_barras, precio_costo, id_categoria, id_proveedor)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO productos (nombre, codigo_barras, precio_costo, id_categoria, id_subcategoria, id_proveedor)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE nombre = nombre
     ");
     $stmtLp = $conn->prepare("
@@ -47,29 +47,44 @@ try {
         ON DUPLICATE KEY UPDATE precio = VALUES(precio)
     ");
     $stmtVar = $conn->prepare("
-        INSERT INTO producto_variante (id_producto, nombre_variante, codigo_barras, stock_actual)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO producto_variante (id_producto, nombre_variante, color, talle, codigo_barras, stock_actual)
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
+    $stmtSd = $conn->prepare("
+        INSERT INTO stock_deposito (id_variante, id_deposito, stock_actual) VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE stock_actual = stock_actual
+    ");
+    $idDeposito  = (int)($_SESSION['usuario_deposito'] ?? 1);
     $stmtGetProd = $conn->prepare("SELECT id FROM productos WHERE nombre = ? LIMIT 1");
     $stmtGetCat  = $conn->prepare("SELECT id FROM categoria WHERE nombre = ? LIMIT 1");
     $stmtInsCat  = $conn->prepare("INSERT INTO categoria (nombre) VALUES (?)");
+    $stmtGetSubc = $conn->prepare("SELECT id FROM subcategoria WHERE nombre = ? LIMIT 1");
+    $stmtInsSubc = $conn->prepare("INSERT INTO subcategoria (nombre) VALUES (?)");
     $stmtGetProv = $conn->prepare("SELECT id FROM proveedor WHERE nombre = ? LIMIT 1");
     $stmtInsProv = $conn->prepare("INSERT INTO proveedor (nombre) VALUES (?)");
 
     while (($row = fgetcsv($handle, 0, ';')) !== false) {
         $fila++;
-        if (count($row) < 8) { $errores[] = "Fila $fila: faltan columnas"; continue; }
+        if (count($row) < 9) { $errores[] = "Fila $fila: faltan columnas"; continue; }
 
-        $nombre    = trim($row[0]);
-        $codProd   = trim($row[1]) ?: null;
-        $catNombre = trim($row[2]);
-        $provNombre= trim($row[3]);
-        $costo     = (float)str_replace(',', '.', str_replace('.', '', $row[4]));
-        $minorista = (float)str_replace(',', '.', str_replace('.', '', $row[5]));
-        $mayorista = (float)str_replace(',', '.', str_replace('.', '', $row[6]));
-        $variante  = trim($row[7]) ?: 'unica';
-        $codVar    = trim($row[8] ?? '') ?: null;
-        $stock     = (int)($row[9] ?? 0);
+        $nombre      = trim($row[0]);
+        $codProd     = trim($row[1]) ?: null;
+        $catNombre   = trim($row[2]);
+        $subcNombre  = trim($row[3]);
+        $provNombre  = trim($row[4]);
+        $costo       = (float)str_replace(',', '.', str_replace('.', '', $row[5]));
+        $minorista   = (float)str_replace(',', '.', str_replace('.', '', $row[6]));
+        $mayorista   = (float)str_replace(',', '.', str_replace('.', '', $row[7]));
+        $color       = trim($row[8] ?? '') ?: null;
+        $talle       = trim($row[9] ?? '') ?: null;
+        $codVar      = trim($row[10] ?? '') ?: null;
+        $stock       = (int)($row[11] ?? 0);
+
+        // Generar nombre_variante
+        if ($color && $talle)   $variante = "$color / $talle";
+        elseif ($color)         $variante = $color;
+        elseif ($talle)         $variante = $talle;
+        else                    $variante = 'unica';
 
         if (!$nombre) { $errores[] = "Fila $fila: nombre vacío"; continue; }
 
@@ -85,6 +100,21 @@ try {
                 $stmtInsCat->bind_param('s', $catNombre);
                 $stmtInsCat->execute();
                 $idCat = $conn->insert_id;
+            }
+        }
+
+        // Sub Categoría
+        $idSubc = null;
+        if ($subcNombre) {
+            $stmtGetSubc->bind_param('s', $subcNombre);
+            $stmtGetSubc->execute();
+            $r = $stmtGetSubc->get_result()->fetch_assoc();
+            if ($r) {
+                $idSubc = (int)$r['id'];
+            } else {
+                $stmtInsSubc->bind_param('s', $subcNombre);
+                $stmtInsSubc->execute();
+                $idSubc = $conn->insert_id;
             }
         }
 
@@ -111,7 +141,7 @@ try {
         if ($prodExistente) {
             $idProducto = (int)$prodExistente['id'];
         } else {
-            $stmtProd->bind_param('ssdii', $nombre, $codProd, $costo, $idCat, $idProv);
+            $stmtProd->bind_param('ssdiiii', $nombre, $codProd, $costo, $idCat, $idSubc, $idProv);
             $stmtProd->execute();
             $idProducto = $conn->insert_id;
 
@@ -129,8 +159,11 @@ try {
         $existeVar->bind_param('is', $idProducto, $variante);
         $existeVar->execute();
         if ($existeVar->get_result()->num_rows === 0) {
-            $stmtVar->bind_param('issi', $idProducto, $variante, $codVar, $stock);
+            $stmtVar->bind_param('issssi', $idProducto, $variante, $color, $talle, $codVar, $stock);
             $stmtVar->execute();
+            $idVariante = $conn->insert_id;
+            $stmtSd->bind_param('iii', $idVariante, $idDeposito, $stock);
+            $stmtSd->execute();
         }
         $existeVar->close();
     }

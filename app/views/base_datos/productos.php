@@ -11,12 +11,14 @@ $db   = new Database();
 $conn = $db->getConnection();
 
 // Categorías y proveedores para filtros y modal
-$categorias = $conn->query("SELECT id, nombre FROM categoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
-$proveedores = $conn->query("SELECT id, nombre FROM proveedor ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$categorias    = $conn->query("SELECT id, nombre FROM categoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$subcategorias = $conn->query("SELECT id, nombre FROM subcategoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$proveedores   = $conn->query("SELECT id, nombre FROM proveedor ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
 
 // Filtros
 $q          = trim($_GET['q'] ?? '');
 $idCat      = (int)($_GET['categoria'] ?? 0);
+$idSubcat   = (int)($_GET['subcategoria'] ?? 0);
 $idProv     = (int)($_GET['proveedor'] ?? 0);
 $estado     = $_GET['estado'] ?? 'activos';
 if (!in_array($estado, ['activos', 'inactivos', 'todos'], true)) $estado = 'activos';
@@ -28,8 +30,9 @@ $types  = '';
 if ($estado === 'activos')   $conds[] = "p.activo = 1";
 if ($estado === 'inactivos') $conds[] = "p.activo = 0";
 
-if ($idCat > 0)  { $conds[] = "p.id_categoria = ?"; $params[] = $idCat;  $types .= 'i'; }
-if ($idProv > 0) { $conds[] = "p.id_proveedor = ?"; $params[] = $idProv; $types .= 'i'; }
+if ($idCat > 0)    { $conds[] = "p.id_categoria = ?";    $params[] = $idCat;    $types .= 'i'; }
+if ($idSubcat > 0) { $conds[] = "p.id_subcategoria = ?"; $params[] = $idSubcat; $types .= 'i'; }
+if ($idProv > 0)   { $conds[] = "p.id_proveedor = ?";    $params[] = $idProv;   $types .= 'i'; }
 
 if ($q !== '') {
     $palabras = array_filter(explode(' ', $q));
@@ -45,19 +48,21 @@ $where = $conds ? 'WHERE ' . implode(' AND ', $conds) : '';
 $sql = "
     SELECT
         p.id, p.nombre, p.codigo_barras, p.precio_costo, p.activo,
-        p.id_categoria, p.id_proveedor,
+        p.id_categoria, p.id_subcategoria, p.id_proveedor,
         c.nombre AS categoria,
+        sc.nombre AS subcategoria,
         pr.nombre AS proveedor,
         COALESCE(SUM(pv.stock_actual), 0) AS stock_total,
         MAX(CASE WHEN lp.tipo_lista = 'MINORISTA' THEN lp.precio END) AS precio_minorista,
         MAX(CASE WHEN lp.tipo_lista = 'MAYORISTA' THEN lp.precio END) AS precio_mayorista
     FROM productos p
     LEFT JOIN categoria c ON c.id = p.id_categoria
+    LEFT JOIN subcategoria sc ON sc.id = p.id_subcategoria
     LEFT JOIN proveedor pr ON pr.id = p.id_proveedor
     LEFT JOIN producto_variante pv ON pv.id_producto = p.id
     LEFT JOIN lista_precio lp ON lp.id_producto = p.id
     $where
-    GROUP BY p.id, p.nombre, p.codigo_barras, p.precio_costo, p.activo, c.nombre, pr.nombre
+    GROUP BY p.id, p.nombre, p.codigo_barras, p.precio_costo, p.activo, p.id_categoria, p.id_subcategoria, p.id_proveedor, c.nombre, sc.nombre, pr.nombre
     ORDER BY p.nombre ASC
 ";
 
@@ -100,6 +105,16 @@ ob_start();
             </select>
         </div>
         <div class="prod-field">
+            <select name="subcategoria">
+                <option value="0">Todas las sub categorías</option>
+                <?php foreach ($subcategorias as $sc): ?>
+                    <option value="<?= $sc['id'] ?>" <?= $idSubcat === (int)$sc['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($sc['nombre']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="prod-field">
             <select name="proveedor">
                 <option value="0">Todos los proveedores</option>
                 <?php foreach ($proveedores as $prov): ?>
@@ -128,6 +143,7 @@ ob_start();
                     <th>Nombre</th>
                     <th>Código</th>
                     <th>Categoría</th>
+                    <th>Sub Categoría</th>
                     <th>Proveedor</th>
                     <?php if ($esAdmin): ?><th>Costo</th><?php endif; ?>
                     <th>Minorista</th>
@@ -146,6 +162,7 @@ ob_start();
                             <td><?= htmlspecialchars($p['nombre']) ?></td>
                             <td><?= htmlspecialchars($p['codigo_barras'] ?? '') ?></td>
                             <td><?= htmlspecialchars($p['categoria'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($p['subcategoria'] ?? '-') ?></td>
                             <td><?= htmlspecialchars($p['proveedor'] ?? '-') ?></td>
                             <?php if ($esAdmin): ?>
                             <td class="col-monto">$<?= number_format($p['precio_costo'] ?? 0, 2, ',', '.') ?></td>
@@ -168,6 +185,7 @@ ob_start();
                                     data-nombre="<?= htmlspecialchars($p['nombre'], ENT_QUOTES) ?>"
                                     data-codigo="<?= htmlspecialchars($p['codigo_barras'] ?? '', ENT_QUOTES) ?>"
                                     data-categoria="<?= (int)($p['id_categoria'] ?? 0) ?>"
+                                    data-subcategoria="<?= (int)($p['id_subcategoria'] ?? 0) ?>"
                                     data-proveedor="<?= (int)($p['id_proveedor'] ?? 0) ?>"
                                     data-costo="<?= number_format($p['precio_costo'] ?? 0, 2, '.', '') ?>"
                                     data-minorista="<?= number_format($p['precio_minorista'] ?? 0, 2, '.', '') ?>"
@@ -202,7 +220,7 @@ ob_start();
         <div class="modal-body">
             <p style="font-size:13px;color:#555;margin-bottom:12px">
                 El archivo debe tener el mismo formato que la exportación:<br>
-                <strong>Nombre ; Código producto ; Categoría ; Proveedor ; Costo ; Minorista ; Mayorista ; Variante ; Código variante ; Stock ; Estado</strong><br><br>
+                <strong>Nombre ; Código producto ; Categoría ; Sub Categoría ; Proveedor ; Costo ; Minorista ; Mayorista ; Color ; Talle ; Código variante ; Stock ; Estado</strong><br><br>
                 Los productos existentes (mismo nombre) no se modifican. Las categorías y proveedores nuevos se crean automáticamente.<br><br>
                 <a href="/TYPSISTEMA/app/controllers/base_datos/productos/ejemplo_importar.php" style="color:var(--azul)">Descargar archivo de ejemplo</a>
             </p>
@@ -245,12 +263,27 @@ ob_start();
                     </div>
                     <div class="modal-field">
                         <label>Categoría</label>
-                        <select id="ep-categoria">
-                            <option value="">Sin categoría</option>
-                            <?php foreach ($categorias as $cat): ?>
-                                <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="select-con-add">
+                            <select id="ep-categoria">
+                                <option value="">Sin categoría</option>
+                                <?php foreach ($categorias as $cat): ?>
+                                    <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" class="btn-add-opcion" data-tipo="categoria" data-target="ep-categoria" title="Nueva categoría">+</button>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>Sub Categoría</label>
+                        <div class="select-con-add">
+                            <select id="ep-subcategoria">
+                                <option value="">Sin sub categoría</option>
+                                <?php foreach ($subcategorias as $sc): ?>
+                                    <option value="<?= $sc['id'] ?>"><?= htmlspecialchars($sc['nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" class="btn-add-opcion" data-tipo="subcategoria" data-target="ep-subcategoria" title="Nueva sub categoría">+</button>
+                        </div>
                     </div>
                     <div class="modal-field">
                         <label>Proveedor</label>
@@ -320,12 +353,27 @@ ob_start();
                     </div>
                     <div class="modal-field">
                         <label>Categoría</label>
-                        <select id="np-categoria">
-                            <option value="">Sin categoría</option>
-                            <?php foreach ($categorias as $cat): ?>
-                                <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="select-con-add">
+                            <select id="np-categoria">
+                                <option value="">Sin categoría</option>
+                                <?php foreach ($categorias as $cat): ?>
+                                    <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" class="btn-add-opcion" data-tipo="categoria" data-target="np-categoria" title="Nueva categoría">+</button>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>Sub Categoría</label>
+                        <div class="select-con-add">
+                            <select id="np-subcategoria">
+                                <option value="">Sin sub categoría</option>
+                                <?php foreach ($subcategorias as $sc): ?>
+                                    <option value="<?= $sc['id'] ?>"><?= htmlspecialchars($sc['nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" class="btn-add-opcion" data-tipo="subcategoria" data-target="np-subcategoria" title="Nueva sub categoría">+</button>
+                        </div>
                     </div>
                     <div class="modal-field">
                         <label>Proveedor</label>
@@ -439,13 +487,14 @@ document.getElementById('np-variantes-lista').addEventListener('click', e => {
 // Guardar
 // =====================
 document.getElementById('np-guardar').addEventListener('click', () => {
-    const nombre    = document.getElementById('np-nombre').value.trim();
-    const codigo    = document.getElementById('np-codigo').value.trim();
-    const categoria = document.getElementById('np-categoria').value || null;
-    const proveedor = document.getElementById('np-proveedor').value || null;
-    const costo     = parseFloat(document.getElementById('np-costo').value) || 0;
-    const minorista = parseFloat(document.getElementById('np-minorista').value) || 0;
-    const mayorista = parseFloat(document.getElementById('np-mayorista').value) || 0;
+    const nombre       = document.getElementById('np-nombre').value.trim();
+    const codigo       = document.getElementById('np-codigo').value.trim();
+    const categoria    = document.getElementById('np-categoria').value || null;
+    const subcategoria = document.getElementById('np-subcategoria').value || null;
+    const proveedor    = document.getElementById('np-proveedor').value || null;
+    const costo        = parseFloat(document.getElementById('np-costo').value) || 0;
+    const minorista    = parseFloat(document.getElementById('np-minorista').value) || 0;
+    const mayorista    = parseFloat(document.getElementById('np-mayorista').value) || 0;
 
     if (!nombre) { alert('El nombre es obligatorio.'); return; }
 
@@ -463,7 +512,7 @@ document.getElementById('np-guardar').addEventListener('click', () => {
     fetch('/TYPSISTEMA/app/controllers/base_datos/productos/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, codigo, categoria, proveedor, costo, minorista, mayorista, variantes })
+        body: JSON.stringify({ nombre, codigo, categoria, subcategoria, proveedor, costo, minorista, mayorista, variantes })
     })
     .then(r => r.json())
     .then(data => {
@@ -543,15 +592,16 @@ function crearFilaVarianteEditar(id = '', color = '', talle = '', codigo = '', s
 }
 
 function abrirModalEditar(btn) {
-    document.getElementById('ep-id').value        = btn.dataset.id;
-    document.getElementById('ep-nombre').value    = btn.dataset.nombre;
-    document.getElementById('ep-codigo').value    = btn.dataset.codigo;
-    document.getElementById('ep-costo').value     = btn.dataset.costo;
-    document.getElementById('ep-minorista').value = btn.dataset.minorista;
-    document.getElementById('ep-mayorista').value = btn.dataset.mayorista;
-    document.getElementById('ep-categoria').value = btn.dataset.categoria;
-    document.getElementById('ep-proveedor').value = btn.dataset.proveedor;
-    document.getElementById('ep-activo').value    = btn.dataset.activo;
+    document.getElementById('ep-id').value           = btn.dataset.id;
+    document.getElementById('ep-nombre').value       = btn.dataset.nombre;
+    document.getElementById('ep-codigo').value       = btn.dataset.codigo;
+    document.getElementById('ep-costo').value        = btn.dataset.costo;
+    document.getElementById('ep-minorista').value    = btn.dataset.minorista;
+    document.getElementById('ep-mayorista').value    = btn.dataset.mayorista;
+    document.getElementById('ep-categoria').value    = btn.dataset.categoria;
+    document.getElementById('ep-subcategoria').value = btn.dataset.subcategoria;
+    document.getElementById('ep-proveedor').value    = btn.dataset.proveedor;
+    document.getElementById('ep-activo').value       = btn.dataset.activo;
 
     // Cargar variantes existentes
     const lista = document.getElementById('ep-variantes-lista');
@@ -600,14 +650,15 @@ document.getElementById('ep-variantes-lista').addEventListener('click', e => {
 });
 
 document.getElementById('ep-guardar').addEventListener('click', () => {
-    const id        = document.getElementById('ep-id').value;
-    const nombre    = document.getElementById('ep-nombre').value.trim();
-    const codigo    = document.getElementById('ep-codigo').value.trim();
-    const categoria = document.getElementById('ep-categoria').value || null;
-    const proveedor = document.getElementById('ep-proveedor').value || null;
-    const costo     = parseFloat(document.getElementById('ep-costo').value) || 0;
-    const minorista = parseFloat(document.getElementById('ep-minorista').value) || 0;
-    const mayorista = parseFloat(document.getElementById('ep-mayorista').value) || 0;
+    const id           = document.getElementById('ep-id').value;
+    const nombre       = document.getElementById('ep-nombre').value.trim();
+    const codigo       = document.getElementById('ep-codigo').value.trim();
+    const categoria    = document.getElementById('ep-categoria').value || null;
+    const subcategoria = document.getElementById('ep-subcategoria').value || null;
+    const proveedor    = document.getElementById('ep-proveedor').value || null;
+    const costo        = parseFloat(document.getElementById('ep-costo').value) || 0;
+    const minorista    = parseFloat(document.getElementById('ep-minorista').value) || 0;
+    const mayorista    = parseFloat(document.getElementById('ep-mayorista').value) || 0;
 
     if (!nombre) { alert('El nombre es obligatorio.'); return; }
 
@@ -626,12 +677,49 @@ document.getElementById('ep-guardar').addEventListener('click', () => {
     fetch('/TYPSISTEMA/app/controllers/base_datos/productos/editar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, nombre, codigo, categoria, proveedor, costo, minorista, mayorista, variantes })
+        body: JSON.stringify({ id, nombre, codigo, categoria, subcategoria, proveedor, costo, minorista, mayorista, variantes })
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) { window.location.reload(); }
         else { alert('Error: ' + data.error); }
+    });
+});
+
+// =====================
+// Crear categoría / sub categoría
+// =====================
+document.querySelectorAll('.btn-add-opcion').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tipo   = btn.dataset.tipo;
+        const label  = tipo === 'categoria' ? 'categoría' : 'sub categoría';
+        const nombre = prompt(`Nombre de la nueva ${label}:`);
+        if (!nombre || !nombre.trim()) return;
+
+        fetch('/TYPSISTEMA/app/controllers/base_datos/categorias/crear.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo, nombre: nombre.trim() })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { alert('Error: ' + data.error); return; }
+
+            // Agregar la nueva opción a TODOS los selects del mismo tipo y seleccionarla en el clickeado
+            const selects = tipo === 'categoria'
+                ? ['np-categoria', 'ep-categoria']
+                : ['np-subcategoria', 'ep-subcategoria'];
+
+            selects.forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const opt = document.createElement('option');
+                opt.value = data.id;
+                opt.textContent = data.nombre;
+                sel.appendChild(opt);
+                if (id === btn.dataset.target) sel.value = data.id;
+            });
+        });
     });
 });
 

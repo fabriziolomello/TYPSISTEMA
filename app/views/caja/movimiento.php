@@ -10,19 +10,31 @@ require_once __DIR__ . '/../../config/database.php';
 $db   = new Database();
 $conn = $db->getConnection();
 
-// ¿Hay caja abierta?
-$resAbierta = $conn->query("SELECT id FROM caja WHERE estado = 'ABIERTA' ORDER BY id DESC LIMIT 1");
-$cajaAbierta = $resAbierta->num_rows > 0;
-$idCaja = $cajaAbierta ? (int)$resAbierta->fetch_assoc()['id'] : null;
+$idSucursal = (int)($_SESSION['usuario_deposito'] ?? 1);
 
-// Todos los movimientos manuales
-$movimientos = $conn->query("
+// ¿Hay caja abierta para esta sucursal?
+$stmtAbierta = $conn->prepare("SELECT id FROM caja WHERE estado = 'ABIERTA' AND id_sucursal = ? ORDER BY id DESC LIMIT 1");
+$stmtAbierta->bind_param('i', $idSucursal);
+$stmtAbierta->execute();
+$resAbierta  = $stmtAbierta->get_result();
+$cajaAbierta = $resAbierta->num_rows > 0;
+$idCaja      = $cajaAbierta ? (int)$resAbierta->fetch_assoc()['id'] : null;
+$stmtAbierta->close();
+
+// Movimientos manuales de esta sucursal
+$stmtMov = $conn->prepare("
     SELECT mc.fecha_hora, mc.tipo, mc.medio_pago, mc.monto, mc.referencia, u.nombre AS usuario
     FROM movimiento_caja mc
+    INNER JOIN caja c ON c.id = mc.id_caja
     INNER JOIN usuarios u ON u.id = mc.id_usuario
     WHERE mc.tipo IN ('INGRESO', 'EGRESO')
+      AND c.id_sucursal = ?
     ORDER BY mc.fecha_hora DESC
-")->fetch_all(MYSQLI_ASSOC);
+");
+$stmtMov->bind_param('i', $idSucursal);
+$stmtMov->execute();
+$movimientos = $stmtMov->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmtMov->close();
 
 $BASE = "/TYPSISTEMA";
 

@@ -232,3 +232,23 @@ button[type="submit"]:hover {
   background-color: #e8f0fb;
   text-decoration: none;
 }
+.mov-input-num {
+    width: 72px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: right;
+}
+
+.mov-input-num[readonly] {
+    background: #f4f4f4;
+    color: #666;
+    border-color: #e0e0e0;
+}
+
+.stock-negativo {
+    color: #c00;
+    font-weight: 600;
+    border-color: #c00 !important;
+}

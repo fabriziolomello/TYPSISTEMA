@@ -318,3 +318,31 @@
     background-color: #e8f0fb;
     text-decoration: none;
 }
+
+.select-con-add {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.select-con-add select {
+    flex: 1;
+}
+
+.btn-add-opcion {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+    background: var(--azul);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-add-opcion:hover {
+    background: #0052a3;
+}

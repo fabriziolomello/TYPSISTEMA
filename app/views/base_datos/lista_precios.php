@@ -7,6 +7,8 @@ $css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/lista_precios.
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
 
+$esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
+
 $db   = new Database();
 $conn = $db->getConnection();
 

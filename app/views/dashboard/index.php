@@ -22,12 +22,17 @@ $hoy = new DateTime();
 $fecha_desde_default = $hoy->format('Y-m-01'); // 1° del mes actual
 $fecha_hasta_default = $hoy->format('Y-m-t');  // último día del mes actual
 
+$esAdmin    = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
+$idSucursal = (int)($_SESSION['usuario_deposito'] ?? 1);
+$sucursales = [1 => 'Terrazas', 2 => 'Distribuidora'];
+
 $fecha_desde    = $_GET['fecha_desde']  ?? $fecha_desde_default;
 $fecha_hasta    = $_GET['fecha_hasta']  ?? $fecha_hasta_default;
 $tipo_venta     = $_GET['tipo_venta']   ?? '';
 $metodo_pago    = $_GET['metodo_pago']  ?? '';
 $estado_pago    = $_GET['estado_pago']  ?? '';
 $cliente_buscar = trim($_GET['cliente'] ?? '');
+$filtroSucursal = $esAdmin ? (int)($_GET['sucursal'] ?? 0) : $idSucursal;
 
 // Normalizamos valores para evitar cosas raras
 $tiposVentaValidos = ['MINORISTA', 'MAYORISTA'];
@@ -59,6 +64,11 @@ $where = [];
 
 // rango de fechas (SIEMPRE)
 $where[] = "v.fecha_hora BETWEEN '{$fecha_desde_sql} 00:00:00' AND '{$fecha_hasta_sql} 23:59:59'";
+
+// sucursal
+if ($filtroSucursal > 0) {
+    $where[] = "v.id_sucursal = " . (int)$filtroSucursal;
+}
 
 if ($tipo_venta !== '') {
     $tipo_venta_sql = $conn->real_escape_string($tipo_venta);
@@ -251,6 +261,18 @@ ob_start();
         value="<?= htmlspecialchars($cliente_buscar) ?>">
     </div>
 
+    <?php if ($esAdmin): ?>
+    <div class="filtro-grupo">
+      <label for="sucursal">Sucursal</label>
+      <select id="sucursal" name="sucursal">
+        <option value="0">Todas</option>
+        <?php foreach ($sucursales as $id => $nombre): ?>
+          <option value="<?= $id ?>" <?= $filtroSucursal === $id ? 'selected' : '' ?>><?= $nombre ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <?php endif; ?>
+
     <div class="filtro-acciones">
       <button type="submit" class="btn btn-primario">Aplicar filtros</button>
       <button
@@ -363,8 +385,8 @@ $returnUrl = urlencode($_SERVER['REQUEST_URI']);
   Ticket
 </a>
 
-              <!-- Anular (solo si NO está ANULADA) -->
-              <?php if ($venta['estado_pago'] !== 'ANULADA'): ?>
+              <!-- Anular (solo admin, solo si NO está ANULADA) -->
+              <?php if ($esAdmin && $venta['estado_pago'] !== 'ANULADA'): ?>
                 <a
                   href="/TYPSISTEMA/app/controllers/ventas/anular.php?id=<?= (int)$venta['id'] ?>"
                   class="btn-accion btn-accion--anular"

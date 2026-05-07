@@ -10,9 +10,15 @@ require_once __DIR__ . '/../../config/database.php';
 $db   = new Database();
 $conn = $db->getConnection();
 
+$esAdmin    = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
+$idSucursal = (int)($_SESSION['usuario_deposito'] ?? 1);
+
+$sucursales = [1 => 'Terrazas', 2 => 'Distribuidora'];
+
 // Filtros
-$desde = trim($_GET['desde'] ?? '');
-$hasta = trim($_GET['hasta'] ?? '');
+$desde        = trim($_GET['desde']    ?? '');
+$hasta        = trim($_GET['hasta']    ?? '');
+$filtroSuc    = $esAdmin ? (int)($_GET['sucursal'] ?? 0) : $idSucursal;
 $reFecha = '/^\d{4}-\d{2}-\d{2}$/';
 if ($desde && !preg_match($reFecha, $desde)) $desde = '';
 if ($hasta && !preg_match($reFecha, $hasta)) $hasta = '';
@@ -22,8 +28,9 @@ $params = [];
 $types  = '';
 $where  = [];
 
-if ($desde) { $where[] = "c.fecha >= ?"; $params[] = $desde; $types .= 's'; }
-if ($hasta) { $where[] = "c.fecha <= ?"; $params[] = $hasta; $types .= 's'; }
+if ($desde)       { $where[] = "c.fecha >= ?";       $params[] = $desde;      $types .= 's'; }
+if ($hasta)       { $where[] = "c.fecha <= ?";        $params[] = $hasta;      $types .= 's'; }
+if ($filtroSuc > 0) { $where[] = "c.id_sucursal = ?"; $params[] = $filtroSuc; $types .= 'i'; }
 
 $sqlWhere = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
@@ -87,6 +94,17 @@ ob_start();
             <label>Hasta</label>
             <input type="date" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
         </div>
+        <?php if ($esAdmin): ?>
+        <div class="caja-field">
+            <label>Sucursal</label>
+            <select name="sucursal">
+                <option value="0">Todas</option>
+                <?php foreach ($sucursales as $id => $nombre): ?>
+                    <option value="<?= $id ?>" <?= $filtroSuc === $id ? 'selected' : '' ?>><?= $nombre ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php endif; ?>
         <div class="caja-filtros-acciones">
             <button type="submit" class="btn-primary">Filtrar</button>
             <a href="<?= $BASE ?>/app/views/caja/historico.php" class="btn-link">Limpiar</a>

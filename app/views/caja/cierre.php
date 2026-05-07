@@ -10,10 +10,16 @@ require_once __DIR__ . '/../../config/database.php';
 $db   = new Database();
 $conn = $db->getConnection();
 
-// ¿Hay caja abierta?
-$resAbierta = $conn->query("SELECT id, fecha, saldo_inicial FROM caja WHERE estado = 'ABIERTA' ORDER BY id DESC LIMIT 1");
+$idSucursal = (int)($_SESSION['usuario_deposito'] ?? 1);
+
+// ¿Hay caja abierta para esta sucursal?
+$stmtAbierta = $conn->prepare("SELECT id, fecha, saldo_inicial FROM caja WHERE estado = 'ABIERTA' AND id_sucursal = ? ORDER BY id DESC LIMIT 1");
+$stmtAbierta->bind_param('i', $idSucursal);
+$stmtAbierta->execute();
+$resAbierta  = $stmtAbierta->get_result();
 $cajaAbierta = $resAbierta->num_rows > 0;
-$caja = $cajaAbierta ? $resAbierta->fetch_assoc() : null;
+$caja        = $cajaAbierta ? $resAbierta->fetch_assoc() : null;
+$stmtAbierta->close();
 
 $medios = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'QR'];
 $totales = [];
