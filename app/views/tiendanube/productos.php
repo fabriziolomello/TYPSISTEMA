@@ -30,6 +30,7 @@ $productos = $conn->query("
         p.id,
         p.nombre,
         p.activo,
+        p.sincronizar_tn,
         tp.tn_product_id,
         tp.sincronizado_at,
         COUNT(pv.id) AS total_variantes,
@@ -39,12 +40,13 @@ $productos = $conn->query("
     LEFT JOIN lista_precio lp ON lp.id_producto = p.id
     LEFT JOIN tiendanube_producto tp ON tp.id_producto = p.id
     WHERE p.activo = 1
-    GROUP BY p.id, p.nombre, p.activo, tp.tn_product_id, tp.sincronizado_at
+    GROUP BY p.id, p.nombre, p.activo, p.sincronizar_tn, tp.tn_product_id, tp.sincronizado_at
     ORDER BY tp.tn_product_id IS NULL DESC, p.nombre ASC
 ")->fetch_all(MYSQLI_ASSOC);
 
 $totalPublicados  = count(array_filter($productos, fn($p) => $p['tn_product_id']));
-$totalSinPublicar = count($productos) - $totalPublicados;
+$totalSinPublicar = count(array_filter($productos, fn($p) => !$p['tn_product_id'] && $p['sincronizar_tn']));
+$totalExcluidos   = count(array_filter($productos, fn($p) => !$p['sincronizar_tn']));
 
 ob_start();
 ?>
@@ -96,11 +98,14 @@ ob_start();
         <div class="tn-stats">
             <span class="tn-stat"><strong><?= $totalPublicados ?></strong> publicados</span>
             <span class="tn-stat tn-stat--pendiente"><strong><?= $totalSinPublicar ?></strong> sin publicar</span>
+            <?php if ($totalExcluidos > 0): ?>
+            <span class="tn-stat tn-stat--excluido"><strong><?= $totalExcluidos ?></strong> excluidos</span>
+            <?php endif; ?>
         </div>
         <?php if ($esAdmin): ?>
         <div style="display:flex;gap:10px;">
             <button type="button" class="btn-primary" id="btn-publicar-todo" <?= !$configurado ? 'disabled title="Configurá la conexión primero"' : '' ?>>
-                Publicar sin publicar (<?= $totalSinPublicar ?>)
+                Productos sin publicar (<?= $totalSinPublicar ?>)
             </button>
             <button type="button" class="btn-link" id="btn-sincronizar" <?= !$configurado ? 'disabled title="Configurá la conexión primero"' : '' ?>>
                 Sincronizar stock y precios
@@ -125,16 +130,19 @@ ob_start();
                     <th>Precio minorista</th>
                     <th>Estado TN</th>
                     <th>Última sincronización</th>
+                    <?php if ($esAdmin): ?><th style="text-align:center;">Sincronizar</th><?php endif; ?>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($productos as $p): ?>
-                    <tr>
+                    <tr class="<?= !$p['sincronizar_tn'] ? 'tn-fila-excluida' : '' ?>">
                         <td><?= htmlspecialchars($p['nombre']) ?></td>
                         <td style="text-align:center;"><?= (int)$p['total_variantes'] ?></td>
                         <td class="col-monto"><?= $p['precio_minorista'] ? '$' . number_format((float)$p['precio_minorista'], 2, ',', '.') : '-' ?></td>
                         <td>
-                            <?php if ($p['tn_product_id']): ?>
+                            <?php if (!$p['sincronizar_tn']): ?>
+                                <span class="tn-badge tn-badge--excluido">Excluido</span>
+                            <?php elseif ($p['tn_product_id']): ?>
                                 <span class="tn-badge tn-badge--publicado">Publicado</span>
                             <?php else: ?>
                                 <span class="tn-badge tn-badge--pendiente">Sin publicar</span>
@@ -143,6 +151,14 @@ ob_start();
                         <td style="color:#888;font-size:13px;">
                             <?= $p['sincronizado_at'] ? date('d/m/Y H:i', strtotime($p['sincronizado_at'])) : '-' ?>
                         </td>
+                        <?php if ($esAdmin): ?>
+                        <td style="text-align:center;">
+                            <label class="tn-toggle" title="<?= $p['sincronizar_tn'] ? 'Desactivar sincronización' : 'Activar sincronización' ?>">
+                                <input type="checkbox" class="tn-toggle-input" data-id="<?= $p['id'] ?>" <?= $p['sincronizar_tn'] ? 'checked' : '' ?>>
+                                <span class="tn-toggle-slider"></span>
+                            </label>
+                        </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -151,6 +167,29 @@ ob_start();
 </div>
 
 <script>
+// Toggle sincronizar_tn
+document.querySelectorAll('.tn-toggle-input').forEach(cb => {
+    cb.addEventListener('change', function() {
+        const id      = parseInt(this.dataset.id);
+        const activo  = this.checked;
+        const fila    = this.closest('tr');
+        this.disabled = true;
+
+        fetch('/TYPSISTEMA/app/controllers/tiendanube/toggle_sync.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, sincronizar_tn: activo })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) { alert('Error: ' + d.error); this.checked = !activo; }
+            else            { window.location.reload(); }
+        })
+        .catch(() => { this.checked = !activo; })
+        .finally(() => { this.disabled = false; });
+    });
+});
+
 // Toggle config
 document.getElementById('tn-config-toggle')?.addEventListener('click', () => {
     const body = document.getElementById('tn-config-body');

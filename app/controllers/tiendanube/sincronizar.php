@@ -31,6 +31,7 @@ try {
         FROM tiendanube_variante tv
         INNER JOIN producto_variante pv ON pv.id = tv.id_variante
         INNER JOIN tiendanube_producto tp ON tp.id_producto = pv.id_producto
+        INNER JOIN productos p ON p.id = pv.id_producto AND p.sincronizar_tn = 1
         LEFT JOIN stock_deposito sd ON sd.id_variante = tv.id_variante AND sd.id_deposito = $idDeposito
         LEFT JOIN lista_precio lp ON lp.id_producto = pv.id_producto
         WHERE pv.activo = 1

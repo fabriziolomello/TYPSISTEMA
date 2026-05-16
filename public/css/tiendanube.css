@@ -62,6 +62,39 @@
 
 .tn-stat { color: #444; }
 .tn-stat--pendiente { color: #b45309; }
+.tn-stat--excluido  { color: #64748b; }
+
+/* Fila excluida de TN */
+.tn-fila-excluida td { opacity: 0.55; }
+
+/* Toggle switch */
+.tn-toggle {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    cursor: pointer;
+}
+.tn-toggle-input { opacity: 0; width: 0; height: 0; position: absolute; }
+.tn-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #cbd5e1;
+    border-radius: 22px;
+    transition: background 0.2s;
+}
+.tn-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    left: 3px; bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+.tn-toggle-input:checked + .tn-toggle-slider { background: #2563eb; }
+.tn-toggle-input:checked + .tn-toggle-slider::before { transform: translateX(16px); }
+.tn-toggle-input:disabled + .tn-toggle-slider { opacity: 0.5; cursor: not-allowed; }
 
 /* Progress */
 .tn-progress-wrap {
@@ -122,6 +155,7 @@
 
 .tn-badge--publicado { background: #d4edda; color: #155724; }
 .tn-badge--pendiente { background: #fff3cd; color: #856404; }
+.tn-badge--excluido  { background: #f1f5f9; color: #64748b; }
 .tn-badge--paid      { background: #d4edda; color: #155724; }
 .tn-badge--unpaid    { background: #fff3cd; color: #856404; }
 .tn-badge--pending   { background: #fff3cd; color: #856404; }

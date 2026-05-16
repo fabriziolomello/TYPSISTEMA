@@ -30,6 +30,7 @@ try {
         FROM productos p
         LEFT JOIN lista_precio lp ON lp.id_producto = p.id
         WHERE p.activo = 1
+          AND p.sincronizar_tn = 1
           AND p.id NOT IN (SELECT id_producto FROM tiendanube_producto)
         GROUP BY p.id, p.nombre, p.precio_costo
         ORDER BY p.nombre ASC
