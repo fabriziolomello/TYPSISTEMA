@@ -224,7 +224,7 @@ document.getElementById('btn-publicar-todo')?.addEventListener('click', () => {
 
 // Sincronizar
 document.getElementById('btn-sincronizar')?.addEventListener('click', () => {
-    if (!confirm('¿Actualizar stock y precios en Tienda Nube?')) return;
+    if (!confirm('¿Actualizar stock, precios y variantes en Tienda Nube?')) return;
     ejecutarAccion('/TYPSISTEMA/app/controllers/tiendanube/sincronizar.php', 'Sincronizando...');
 });
 
@@ -249,7 +249,10 @@ function ejecutarAccion(url, msgInicio) {
                 return;
             }
             const cant = d.publicados ?? d.sincronizados ?? 0;
-            msg.textContent = `✅ ${cant} producto(s) procesados.`;
+            let resumen = `✅ ${cant} variante(s) actualizadas.`;
+            if (d.variantes_agregadas)  resumen += ` +${d.variantes_agregadas} agregadas.`;
+            if (d.variantes_eliminadas) resumen += ` -${d.variantes_eliminadas} eliminadas.`;
+            msg.textContent = resumen;
             if (d.errores && d.errores.length) {
                 msg.textContent += ' Con errores: ' + d.errores.join(' | ');
             }
