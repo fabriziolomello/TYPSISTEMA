@@ -7,7 +7,9 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
 
-if (($_SESSION['usuario_rol'] ?? '') !== 'ADMIN') {
+$_esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
+$_dep     = (int)($_SESSION['usuario_deposito'] ?? 0);
+if (!$_esAdmin && $_dep !== 1) {
     echo json_encode(['success' => false, 'error' => 'Sin permisos']);
     exit;
 }

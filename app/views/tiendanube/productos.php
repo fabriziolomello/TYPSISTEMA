@@ -128,7 +128,7 @@ ob_start();
                     <th>Precio minorista</th>
                     <th>Estado TN</th>
                     <th>Última sincronización</th>
-                    <?php if ($esAdmin): ?><th style="text-align:center;">Sincronizar</th><?php endif; ?>
+                    <th style="text-align:center;">Sincronizar</th>
                 </tr>
             </thead>
             <tbody>
@@ -149,14 +149,12 @@ ob_start();
                         <td style="color:#888;font-size:13px;">
                             <?= $p['sincronizado_at'] ? date('d/m/Y H:i', strtotime($p['sincronizado_at'])) : '-' ?>
                         </td>
-                        <?php if ($esAdmin): ?>
                         <td style="text-align:center;">
                             <label class="tn-toggle" title="<?= $p['sincronizar_tn'] ? 'Desactivar sincronización' : 'Activar sincronización' ?>">
                                 <input type="checkbox" class="tn-toggle-input" data-id="<?= $p['id'] ?>" <?= $p['sincronizar_tn'] ? 'checked' : '' ?>>
                                 <span class="tn-toggle-slider"></span>
                             </label>
                         </td>
-                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
