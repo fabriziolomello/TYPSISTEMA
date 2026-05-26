@@ -46,6 +46,7 @@ $_menuVerTN   = $_menuEsAdmin || $_menuDep === 1;
             <?php if ($_menuEsAdmin): ?>
             <li class="menu-title">Configuración</li>
             <li><a href="<?= BASE_URL ?>app/views/config/usuarios.php">Usuarios y permisos</a></li>
+            <li><a href="<?= BASE_URL ?>app/views/config/limpiar.php" style="color:#dc2626;">Limpiar datos de prueba</a></li>
             <?php endif; ?>
         </ul>
     </nav>
