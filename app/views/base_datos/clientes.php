@@ -1,11 +1,12 @@
 <?php
 // app/views/base_datos/clientes.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo   = "Clientes";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/clientes.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $db   = new Database();
 $conn = $db->getConnection();

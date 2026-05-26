@@ -1,11 +1,12 @@
 <?php
 // app/views/informes/caja.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo    = "Informe: Caja";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/informes.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 

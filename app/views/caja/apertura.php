@@ -1,11 +1,12 @@
 <?php
 // app/views/caja/apertura.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo   = "Apertura de caja";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/caja.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $db   = new Database();
 $conn = $db->getConnection();

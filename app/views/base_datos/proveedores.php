@@ -1,11 +1,12 @@
 <?php
 // app/views/base_datos/proveedores.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo    = "Proveedores";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/proveedores.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $db   = new Database();
 $conn = $db->getConnection();

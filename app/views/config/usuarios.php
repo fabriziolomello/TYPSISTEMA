@@ -1,11 +1,12 @@
 <?php
 // app/views/config/usuarios.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo    = "Usuarios y permisos";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/usuarios.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 // Solo admin
 if (($_SESSION['usuario_rol'] ?? '') !== 'ADMIN') {

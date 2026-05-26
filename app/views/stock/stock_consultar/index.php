@@ -1,11 +1,12 @@
 <?php
 // app/views/stock/stock_consultar/index.php
 
+require_once __DIR__ . '/../../../config/seguridad.php';
+require_once __DIR__ . '/../../../config/database.php';
+
 $titulo    = "Consultar stock";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/stock.css">';
 
-require_once __DIR__ . '/../../../config/seguridad.php';
-require_once __DIR__ . '/../../../config/database.php';
 
 $db   = new Database();
 $conn = $db->getConnection();

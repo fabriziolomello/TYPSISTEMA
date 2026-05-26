@@ -1,11 +1,12 @@
 <?php
 // app/views/informes/ventas_producto.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo    = "Informe: Ventas por producto";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/informes.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 if (!$esAdmin) { header('Location: ' . BASE_URL . 'app/views/dashboard/index.php'); exit; }

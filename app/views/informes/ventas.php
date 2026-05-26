@@ -1,11 +1,12 @@
 <?php
 // app/views/informes/ventas.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo    = "Informe: Ventas por período";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/informes.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $db   = new Database();
 $conn = $db->getConnection();

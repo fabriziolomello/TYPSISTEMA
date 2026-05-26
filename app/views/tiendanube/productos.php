@@ -1,11 +1,12 @@
 <?php
 // app/views/tiendanube/productos.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo    = "Tienda Nube — Productos";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/tiendanube.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $_esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 $_dep     = (int)($_SESSION['usuario_deposito'] ?? 0);

@@ -3,11 +3,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo = "Nueva venta / Punto POS";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/pos.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $listaPorDefecto = 'MINORISTA'; // o 'MAYORISTA' si querés arrancar así
 $idDeposito = (int)($_SESSION['usuario_deposito'] ?? 1);

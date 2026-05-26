@@ -1,11 +1,12 @@
 <?php
 // app/views/base_datos/lista_precios.php
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
+
 $titulo   = "Lista de precios";
 $css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/lista_precios.css">';
 
-require_once __DIR__ . '/../../config/seguridad.php';
-require_once __DIR__ . '/../../config/database.php';
 
 $esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 
