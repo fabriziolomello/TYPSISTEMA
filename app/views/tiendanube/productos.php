@@ -102,7 +102,6 @@ ob_start();
             <span class="tn-stat tn-stat--excluido"><strong><?= $totalExcluidos ?></strong> excluidos</span>
             <?php endif; ?>
         </div>
-        <?php if ($esAdmin): ?>
         <div style="display:flex;gap:10px;">
             <button type="button" class="btn-primary" id="btn-publicar-todo" <?= !$configurado ? 'disabled title="Configurá la conexión primero"' : '' ?>>
                 Productos sin publicar (<?= $totalSinPublicar ?>)
@@ -111,7 +110,6 @@ ob_start();
                 Sincronizar stock y precios
             </button>
         </div>
-        <?php endif; ?>
     </div>
 
     <!-- PROGRESS BAR (oculta) -->
