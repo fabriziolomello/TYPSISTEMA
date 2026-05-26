@@ -17,7 +17,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
         <span class="header-separator">|</span>
 
-       <a href="/TYPSISTEMA/app/controllers/auth/logout.php" class="btn-logout">
+       <a href="<?= BASE_URL ?>app/controllers/auth/logout.php" class="btn-logout">
     Cerrar sesión
 </a>
     </div>

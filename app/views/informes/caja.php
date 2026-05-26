@@ -2,7 +2,7 @@
 // app/views/informes/caja.php
 
 $titulo    = "Informe: Caja";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/informes.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/informes.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -11,7 +11,7 @@ $esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 
 // Solo admins pueden acceder
 if (!$esAdmin) {
-    header('Location: /TYPSISTEMA/app/views/dashboard/index.php');
+    header('Location: ' . BASE_URL . 'app/views/dashboard/index.php');
     exit;
 }
 
@@ -153,7 +153,7 @@ ob_start();
             </div>
             <div class="inf-filtros-acciones">
                 <button type="submit" class="btn-primary">Filtrar</button>
-                <a href="/TYPSISTEMA/app/views/informes/caja.php" class="btn-link">Limpiar</a>
+                <a href="<?= BASE_URL ?>app/views/informes/caja.php" class="btn-link">Limpiar</a>
             </div>
         </form>
     </div>

@@ -2,7 +2,7 @@
 // app/views/caja/movimiento.php
 
 $titulo   = "Ingreso / Egreso de caja";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/caja.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/caja.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -36,7 +36,6 @@ $stmtMov->execute();
 $movimientos = $stmtMov->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmtMov->close();
 
-$BASE = "/TYPSISTEMA";
 
 ob_start();
 ?>
@@ -50,7 +49,7 @@ ob_start();
             No hay ninguna caja abierta. Abrí una caja antes de registrar movimientos.
         </div>
         <div class="caja-acciones">
-            <a href="<?= $BASE ?>/app/views/caja/apertura.php" class="btn-primary">Ir a apertura</a>
+            <a href="<?= BASE_URL ?>app/views/caja/apertura.php" class="btn-primary">Ir a apertura</a>
         </div>
 
     <?php else: ?>
@@ -90,7 +89,7 @@ ob_start();
         </div>
 
         <div class="caja-acciones">
-            <a href="<?= $BASE ?>/app/views/dashboard/index.php" class="btn-link">Cancelar</a>
+            <a href="<?= BASE_URL ?>app/views/dashboard/index.php" class="btn-link">Cancelar</a>
             <button type="button" class="btn-primary" id="mc-guardar">Guardar</button>
         </div>
 
@@ -130,7 +129,7 @@ ob_start();
                 return;
             }
 
-            fetch('/TYPSISTEMA/app/controllers/caja/movimiento.php', {
+            fetch('<?= BASE_URL ?>app/controllers/caja/movimiento.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_caja: idCaja, tipo, medio_pago: medio, monto, referencia })
@@ -138,7 +137,7 @@ ob_start();
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/TYPSISTEMA/app/views/caja/movimiento.php?ok=1';
+                    window.location.href = '<?= BASE_URL ?>app/views/caja/movimiento.php?ok=1';
                 } else {
                     alert('Error: ' + data.error);
                 }

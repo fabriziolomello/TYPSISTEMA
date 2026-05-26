@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login</title>
 
     <!-- Ajustá la ruta según cómo entres al proyecto en el navegador -->
-    <link rel="stylesheet" href="/TYPSISTEMA/public/css/login.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>public/css/login.css">
 </head>
 <body>
 

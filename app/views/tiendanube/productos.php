@@ -2,7 +2,7 @@
 // app/views/tiendanube/productos.php
 
 $titulo    = "Tienda Nube — Productos";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/tiendanube.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/tiendanube.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../config/database.php';
 $_esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 $_dep     = (int)($_SESSION['usuario_deposito'] ?? 0);
 if (!$_esAdmin && $_dep !== 1) {
-    header('Location: /TYPSISTEMA/app/views/dashboard/index.php');
+    header('Location: ' . BASE_URL . 'app/views/dashboard/index.php');
     exit;
 }
 
@@ -55,7 +55,7 @@ ob_start();
 
     <div class="tn-header">
         <h1 class="tn-titulo">Tienda Nube — Productos</h1>
-        <a href="/TYPSISTEMA/app/views/tiendanube/ventas.php" class="btn-link">Ver pedidos</a>
+        <a href="<?= BASE_URL ?>app/views/tiendanube/ventas.php" class="btn-link">Ver pedidos</a>
     </div>
 
     <?php if ($esAdmin): ?>
@@ -171,7 +171,7 @@ document.querySelectorAll('.tn-toggle-input').forEach(cb => {
         const fila    = this.closest('tr');
         this.disabled = true;
 
-        fetch('/TYPSISTEMA/app/controllers/tiendanube/toggle_sync.php', {
+        fetch('<?= BASE_URL ?>app/controllers/tiendanube/toggle_sync.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, sincronizar_tn: activo })
@@ -200,7 +200,7 @@ document.getElementById('tn-guardar-config')?.addEventListener('click', () => {
 
     if (!store_id || !access_token) { alert('Completá Store ID y Access Token.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/tiendanube/guardar_config.php', {
+    fetch('<?= BASE_URL ?>app/controllers/tiendanube/guardar_config.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ store_id, access_token, id_deposito })
@@ -215,13 +215,13 @@ document.getElementById('tn-guardar-config')?.addEventListener('click', () => {
 // Publicar todo
 document.getElementById('btn-publicar-todo')?.addEventListener('click', () => {
     if (!confirm('¿Publicar todos los productos sin publicar en Tienda Nube?')) return;
-    ejecutarAccion('/TYPSISTEMA/app/controllers/tiendanube/publicar.php', 'Publicando productos...');
+    ejecutarAccion('<?= BASE_URL ?>app/controllers/tiendanube/publicar.php', 'Publicando productos...');
 });
 
 // Sincronizar
 document.getElementById('btn-sincronizar')?.addEventListener('click', () => {
     if (!confirm('¿Actualizar stock, precios y variantes en Tienda Nube?')) return;
-    ejecutarAccion('/TYPSISTEMA/app/controllers/tiendanube/sincronizar.php', 'Sincronizando...');
+    ejecutarAccion('<?= BASE_URL ?>app/controllers/tiendanube/sincronizar.php', 'Sincronizando...');
 });
 
 function ejecutarAccion(url, msgInicio) {

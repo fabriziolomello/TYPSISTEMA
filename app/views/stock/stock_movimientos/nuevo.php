@@ -2,7 +2,7 @@
 // app/views/stock/stock_movimientos/nuevo.php
 
 $titulo   = "Nuevo movimiento de stock";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/stock_movimientos.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/stock_movimientos.css">';
 
 require_once __DIR__ . '/../../../config/seguridad.php';
 require_once __DIR__ . '/../../../config/database.php';
@@ -37,7 +37,6 @@ while ($row = $sdRes->fetch_assoc()) {
 }
 
 $hoy       = date('Y-m-d');
-$BASE      = "/TYPSISTEMA";
 $depositos = $conn->query("SELECT id, nombre FROM deposito ORDER BY id ASC")->fetch_all(MYSQLI_ASSOC);
 $depUsuario = (int)($_SESSION['usuario_deposito'] ?? 1);
 
@@ -127,7 +126,7 @@ ob_start();
 
     <!-- ACCIONES -->
     <div class="mov-acciones">
-        <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/index.php" class="btn-link">Cancelar</a>
+        <a href="<?= BASE_URL ?>app/views/stock/stock_movimientos/index.php" class="btn-link">Cancelar</a>
         <button type="button" class="btn-primary" id="mov-guardar" disabled>Guardar</button>
     </div>
 
@@ -345,7 +344,7 @@ document.getElementById('mov-guardar').addEventListener('click', () => {
     const itemsConCantidad = items.filter(i => i.cantidad > 0);
     if (itemsConCantidad.length === 0) { alert('Al menos un item debe tener cantidad mayor a 0.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/stock/movimientos/guardar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/stock/movimientos/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -358,7 +357,7 @@ document.getElementById('mov-guardar').addEventListener('click', () => {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            window.location.href = '/TYPSISTEMA/app/views/stock/stock_movimientos/index.php?ok=1';
+            window.location.href = '<?= BASE_URL ?>app/views/stock/stock_movimientos/index.php?ok=1';
         } else {
             alert('Error: ' + data.error);
         }

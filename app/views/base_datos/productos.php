@@ -2,7 +2,7 @@
 // app/views/base_datos/productos.php
 
 $titulo   = "Productos";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/productos.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/productos.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -83,7 +83,7 @@ ob_start();
     <div class="prod-header">
         <h1 class="prod-titulo">Productos</h1>
         <div class="prod-header-acciones">
-            <a href="/TYPSISTEMA/app/controllers/base_datos/productos/exportar.php" class="btn-link">Exportar CSV</a>
+            <a href="<?= BASE_URL ?>app/controllers/base_datos/productos/exportar.php" class="btn-link">Exportar CSV</a>
             <button type="button" class="btn-link" id="btn-importar">Importar CSV</button>
             <button type="button" class="btn-primary" id="btn-nuevo-producto">+ Nuevo producto</button>
         </div>
@@ -132,7 +132,7 @@ ob_start();
             </select>
         </div>
         <button type="submit" class="btn-primary">Filtrar</button>
-        <a href="/TYPSISTEMA/app/views/base_datos/productos.php" class="btn-link">Limpiar</a>
+        <a href="<?= BASE_URL ?>app/views/base_datos/productos.php" class="btn-link">Limpiar</a>
     </form>
 
     <!-- Tabla -->
@@ -222,7 +222,7 @@ ob_start();
                 El archivo debe tener el mismo formato que la exportación:<br>
                 <strong>Nombre ; Código producto ; Categoría ; Sub Categoría ; Proveedor ; Costo ; Minorista ; Mayorista ; Color ; Talle ; Código variante ; Stock ; Estado</strong><br><br>
                 Los productos existentes (mismo nombre) no se modifican. Las categorías y proveedores nuevos se crean automáticamente.<br><br>
-                <a href="/TYPSISTEMA/app/controllers/base_datos/productos/ejemplo_importar.php" style="color:var(--azul)">Descargar archivo de ejemplo</a>
+                <a href="<?= BASE_URL ?>app/controllers/base_datos/productos/ejemplo_importar.php" style="color:var(--azul)">Descargar archivo de ejemplo</a>
             </p>
             <div class="modal-field">
                 <label>Archivo CSV</label>
@@ -509,7 +509,7 @@ document.getElementById('np-guardar').addEventListener('click', () => {
 
     if (variantes.length === 0) { alert('Agregá al menos una variante.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/productos/guardar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/productos/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre, codigo, categoria, subcategoria, proveedor, costo, minorista, mayorista, variantes })
@@ -551,7 +551,7 @@ document.getElementById('imp-guardar').addEventListener('click', () => {
     const resultado = document.getElementById('imp-resultado');
     resultado.textContent = 'Importando...';
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/productos/importar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/productos/importar.php', {
         method: 'POST',
         body: formData
     })
@@ -607,7 +607,7 @@ function abrirModalEditar(btn) {
     const lista = document.getElementById('ep-variantes-lista');
     lista.innerHTML = '<p style="color:#888;font-size:13px">Cargando variantes...</p>';
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/productos/variantes.php?id=' + btn.dataset.id)
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/productos/variantes.php?id=' + btn.dataset.id)
         .then(r => r.json())
         .then(data => {
             lista.innerHTML = '';
@@ -674,7 +674,7 @@ document.getElementById('ep-guardar').addEventListener('click', () => {
 
     if (variantes.length === 0) { alert('Agregá al menos una variante.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/productos/editar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/productos/editar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, nombre, codigo, categoria, subcategoria, proveedor, costo, minorista, mayorista, variantes })
@@ -696,7 +696,7 @@ document.querySelectorAll('.btn-add-opcion').forEach(btn => {
         const nombre = prompt(`Nombre de la nueva ${label}:`);
         if (!nombre || !nombre.trim()) return;
 
-        fetch('/TYPSISTEMA/app/controllers/base_datos/categorias/crear.php', {
+        fetch('<?= BASE_URL ?>app/controllers/base_datos/categorias/crear.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tipo, nombre: nombre.trim() })
@@ -732,7 +732,7 @@ document.querySelectorAll('.btn-eliminar').forEach(btn => {
         const accion = activo ? 'desactivar' : 'activar';
         if (!confirm(`¿Seguro que querés ${accion} "${btn.dataset.nombre}"?`)) return;
 
-        fetch('/TYPSISTEMA/app/controllers/base_datos/productos/toggleActivo.php', {
+        fetch('<?= BASE_URL ?>app/controllers/base_datos/productos/toggleActivo.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: btn.dataset.id, activo: activo ? 0 : 1 })

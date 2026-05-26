@@ -2,7 +2,7 @@
 // app/views/caja/apertura.php
 
 $titulo   = "Apertura de caja";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/caja.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/caja.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -44,7 +44,6 @@ if (!$cajaAbierta) {
 }
 
 $hoy  = date('Y-m-d');
-$BASE = "/TYPSISTEMA";
 
 ob_start();
 ?>
@@ -58,7 +57,7 @@ ob_start();
             Ya hay una caja abierta. Cerrala antes de abrir una nueva.
         </div>
         <div class="caja-acciones">
-            <a href="<?= $BASE ?>/app/views/caja/cierre.php" class="btn-primary">Ir al cierre</a>
+            <a href="<?= BASE_URL ?>app/views/caja/cierre.php" class="btn-primary">Ir al cierre</a>
         </div>
 
     <?php else: ?>
@@ -107,7 +106,7 @@ ob_start();
         document.getElementById('btn-abrir').addEventListener('click', () => {
             if (!confirm('¿Confirmar apertura de caja?')) return;
 
-            fetch('/TYPSISTEMA/app/controllers/caja/abrir.php', {
+            fetch('<?= BASE_URL ?>app/controllers/caja/abrir.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -118,7 +117,7 @@ ob_start();
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/TYPSISTEMA/app/views/dashboard/index.php';
+                    window.location.href = '<?= BASE_URL ?>app/views/dashboard/index.php';
                 } else {
                     alert('Error: ' + data.error);
                 }

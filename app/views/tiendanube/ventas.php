@@ -2,7 +2,7 @@
 // app/views/tiendanube/ventas.php
 
 $titulo    = "Tienda Nube — Pedidos";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/tiendanube.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/tiendanube.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../config/database.php';
 $_esAdmin = ($_SESSION['usuario_rol'] ?? '') === 'ADMIN';
 $_dep     = (int)($_SESSION['usuario_deposito'] ?? 0);
 if (!$_esAdmin && $_dep !== 1) {
-    header('Location: /TYPSISTEMA/app/views/dashboard/index.php');
+    header('Location: ' . BASE_URL . 'app/views/dashboard/index.php');
     exit;
 }
 require_once __DIR__ . '/../../controllers/tiendanube/api.php';
@@ -52,11 +52,11 @@ ob_start();
 
     <div class="tn-header">
         <h1 class="tn-titulo">Tienda Nube — Pedidos</h1>
-        <a href="/TYPSISTEMA/app/views/tiendanube/productos.php" class="btn-link">Ver productos</a>
+        <a href="<?= BASE_URL ?>app/views/tiendanube/productos.php" class="btn-link">Ver productos</a>
     </div>
 
     <?php if (!$configurado): ?>
-        <div class="tn-aviso">⚠ Tienda Nube no está configurada. <a href="/TYPSISTEMA/app/views/tiendanube/productos.php">Configurar</a></div>
+        <div class="tn-aviso">⚠ Tienda Nube no está configurada. <a href="<?= BASE_URL ?>app/views/tiendanube/productos.php">Configurar</a></div>
     <?php elseif ($error): ?>
         <div class="tn-aviso tn-aviso--error">Error al conectar con Tienda Nube: <?= htmlspecialchars($error) ?></div>
     <?php elseif (empty($pedidos)): ?>
@@ -136,7 +136,7 @@ document.querySelectorAll('.btn-registrar-venta').forEach(btn => {
         this.textContent = 'Registrando...';
         const boton      = this;
 
-        fetch('/TYPSISTEMA/app/controllers/tiendanube/registrar_venta.php', {
+        fetch('<?= BASE_URL ?>app/controllers/tiendanube/registrar_venta.php', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ tn_order_id: tnId })

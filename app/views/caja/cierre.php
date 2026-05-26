@@ -2,7 +2,7 @@
 // app/views/caja/cierre.php
 
 $titulo   = "Cierre de caja";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/caja.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/caja.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -67,7 +67,6 @@ if ($cajaAbierta) {
     }
 }
 
-$BASE = "/TYPSISTEMA";
 
 ob_start();
 ?>
@@ -81,7 +80,7 @@ ob_start();
             No hay ninguna caja abierta.
         </div>
         <div class="caja-acciones">
-            <a href="<?= $BASE ?>/app/views/caja/apertura.php" class="btn-primary">Ir a apertura</a>
+            <a href="<?= BASE_URL ?>app/views/caja/apertura.php" class="btn-primary">Ir a apertura</a>
         </div>
 
     <?php else: ?>
@@ -135,7 +134,7 @@ ob_start();
         </div>
 
         <div class="caja-acciones">
-            <a href="<?= $BASE ?>/app/views/dashboard/index.php" class="btn-link">Cancelar</a>
+            <a href="<?= BASE_URL ?>app/views/dashboard/index.php" class="btn-link">Cancelar</a>
             <button type="button" class="btn-primary" id="btn-cerrar">Confirmar cierre</button>
         </div>
 
@@ -203,7 +202,7 @@ ob_start();
                 });
             });
 
-            fetch('/TYPSISTEMA/app/controllers/caja/cerrar.php', {
+            fetch('<?= BASE_URL ?>app/controllers/caja/cerrar.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -215,7 +214,7 @@ ob_start();
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/TYPSISTEMA/app/views/caja/historico.php';
+                    window.location.href = '<?= BASE_URL ?>app/views/caja/historico.php';
                 } else {
                     alert('Error: ' + data.error);
                 }

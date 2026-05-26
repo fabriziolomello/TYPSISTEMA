@@ -4,7 +4,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 $titulo = "Nueva venta / Punto POS";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/pos.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/pos.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -320,5 +320,5 @@ ob_start();
 
 <?php
 $contenido = ob_get_clean();
-$js_extra = '<script src="/TYPSISTEMA/public/js/pos.js"></script>';
+$js_extra = '<script src="' . BASE_URL . 'public/js/pos.js"></script>';
 require __DIR__ . '/../layouts/main.php';

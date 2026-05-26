@@ -463,7 +463,7 @@ function initPaymentModal() {
             id_cliente
         };
 
-        fetch("/TYPSISTEMA/app/controllers/ventas/guardar.php", {
+        fetch(BASE_URL + "app/controllers/ventas/guardar.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -554,7 +554,7 @@ function initSuccessModal() {
 
             // Abrimos el ticket en una nueva pestaña/ventana
             window.open(
-                `/TYPSISTEMA/app/views/ventas/imprimir.php?id=${idVenta}`,
+                `app/views/ventas/imprimir.php?id=`,
                 "_blank"
             );
         });
@@ -586,7 +586,7 @@ function initClienteSearch() {
 
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            fetch("/TYPSISTEMA/app/controllers/ventas/buscar_clientes.php?q=" + encodeURIComponent(q))
+            fetch(BASE_URL + "app/controllers/ventas/buscar_clientes.php?q=" + encodeURIComponent(q))
                 .then(r => r.json())
                 .then(clientes => {
                     if (!clientes.length) { cerrarSugerencias(); return; }

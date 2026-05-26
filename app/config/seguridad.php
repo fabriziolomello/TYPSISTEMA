@@ -1,5 +1,6 @@
 <?php
 // app/config/seguridad.php
+require_once __DIR__ . '/app.php';
 session_start();
 
 // ¿Está logueado?
@@ -24,6 +25,6 @@ if (!$logueado) {
     }
 
     // Si NO es AJAX, redirigir al login
-    header('Location: ../../views/auth/login.php');
+    header('Location: ' . BASE_URL . 'app/views/auth/login.php');
     exit;
 }

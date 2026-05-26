@@ -2,7 +2,7 @@
 // app/views/caja/historico.php
 
 $titulo   = "Histórico de caja";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/caja.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/caja.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -72,7 +72,6 @@ if (!empty($cajas)) {
     }
 }
 
-$BASE = "/TYPSISTEMA";
 
 function fmt($n) {
     return '$' . number_format((float)$n, 2, ',', '.');
@@ -107,7 +106,7 @@ ob_start();
         <?php endif; ?>
         <div class="caja-filtros-acciones">
             <button type="submit" class="btn-primary">Filtrar</button>
-            <a href="<?= $BASE ?>/app/views/caja/historico.php" class="btn-link">Limpiar</a>
+            <a href="<?= BASE_URL ?>app/views/caja/historico.php" class="btn-link">Limpiar</a>
         </div>
     </form>
 

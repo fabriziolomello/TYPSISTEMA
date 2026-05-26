@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 
 $titulo = "Dashboard";
 
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/dashboard.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/dashboard.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -196,7 +196,7 @@ ob_start();
     <h1>Dashboard de ventas</h1>
 
     <!-- Botón POS (nueva venta) -->
-    <a href="/TYPSISTEMA/app/views/ventas/nueva.php" class="btn btn-primario">
+    <a href="<?= BASE_URL ?>app/views/ventas/nueva.php" class="btn btn-primario">
       Nueva venta
     </a>
   </div>
@@ -378,7 +378,7 @@ $returnUrl = urlencode($_SERVER['REQUEST_URI']);
 
               <!-- Ticket -->
               <a
-  href="/TYPSISTEMA/app/views/ventas/imprimir.php?id=<?= (int)$venta['id'] ?>"
+  href="<?= BASE_URL ?>app/views/ventas/imprimir.php?id=<?= (int)$venta['id'] ?>"
   class="btn-accion btn-accion--ticket"
   target="_blank"
 >
@@ -388,7 +388,7 @@ $returnUrl = urlencode($_SERVER['REQUEST_URI']);
               <!-- Anular (solo admin, solo si NO está ANULADA) -->
               <?php if ($esAdmin && $venta['estado_pago'] !== 'ANULADA'): ?>
                 <a
-                  href="/TYPSISTEMA/app/controllers/ventas/anular.php?id=<?= (int)$venta['id'] ?>"
+                  href="<?= BASE_URL ?>app/controllers/ventas/anular.php?id=<?= (int)$venta['id'] ?>"
                   class="btn-accion btn-accion--anular"
                   onclick="return confirm('¿Seguro que querés anular esta venta?');"
                 >
@@ -399,7 +399,7 @@ $returnUrl = urlencode($_SERVER['REQUEST_URI']);
               <!-- Cambiar tipo (solo si NO está ANULADA) -->
               <?php if ($venta['estado_pago'] !== 'ANULADA'): ?>
                 <a
-                  href="/TYPSISTEMA/app/controllers/ventas/cambiar_tipo.php?id=<?= (int)$venta['id'] ?>&return=<?= $returnUrl ?>"
+                  href="<?= BASE_URL ?>app/controllers/ventas/cambiar_tipo.php?id=<?= (int)$venta['id'] ?>&return=<?= $returnUrl ?>"
                   class="btn-accion btn-accion--detalle"
                 >
                   Tipo
@@ -455,7 +455,7 @@ $returnUrl = urlencode($_SERVER['REQUEST_URI']);
     const iframeDetalle     = document.getElementById('modal-detalle-iframe');
 
     function abrirModalDetalle(idVenta) {
-      iframeDetalle.src = '/TYPSISTEMA/app/views/ventas/detalle.php?id=' + encodeURIComponent(idVenta);
+      iframeDetalle.src = '<?= BASE_URL ?>app/views/ventas/detalle.php?id=' + encodeURIComponent(idVenta);
       modalDetalle.classList.add('modal-detalle--visible');
     }
 
@@ -482,7 +482,7 @@ $returnUrl = urlencode($_SERVER['REQUEST_URI']);
     const iframeCobrar     = document.getElementById('modal-cobrar-iframe');
 
     function abrirModalCobrar(idVenta) {
-      iframeCobrar.src = '/TYPSISTEMA/app/views/ventas/cobrar.php?id=' + encodeURIComponent(idVenta);
+      iframeCobrar.src = '<?= BASE_URL ?>app/views/ventas/cobrar.php?id=' + encodeURIComponent(idVenta);
       modalCobrar.classList.add('modal-cobrar--visible');
     }
 

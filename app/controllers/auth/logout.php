@@ -12,5 +12,5 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-header('Location: /TYPSISTEMA/app/views/auth/login.php');
+header('Location: ' . BASE_URL . 'app/views/auth/login.php');
 exit;

@@ -2,7 +2,7 @@
 // app/views/base_datos/proveedores.php
 
 $titulo    = "Proveedores";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/proveedores.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/proveedores.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -54,7 +54,7 @@ ob_start();
     <form method="get" class="prov-filtros">
         <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Buscar por nombre...">
         <button type="submit" class="btn-primary">Filtrar</button>
-        <a href="/TYPSISTEMA/app/views/base_datos/proveedores.php" class="btn-link">Limpiar</a>
+        <a href="<?= BASE_URL ?>app/views/base_datos/proveedores.php" class="btn-link">Limpiar</a>
     </form>
 
     <!-- Tabla -->
@@ -173,7 +173,7 @@ document.getElementById('prov-guardar').addEventListener('click', () => {
 
     if (!nombre) { alert('El nombre es obligatorio.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/proveedores/guardar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/proveedores/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, nombre })
@@ -207,7 +207,7 @@ document.querySelectorAll('.btn-ver-productos').forEach(btn => {
         modalProdProv.classList.add('modal-overlay--visible');
         document.body.classList.add('modal-abierto');
 
-        fetch('/TYPSISTEMA/app/controllers/base_datos/proveedores/productos.php?id=' + btn.dataset.id)
+        fetch('<?= BASE_URL ?>app/controllers/base_datos/proveedores/productos.php?id=' + btn.dataset.id)
             .then(r => r.json())
             .then(data => {
                 if (!data.success) { body.innerHTML = '<p style="color:red">Error: ' + data.error + '</p>'; return; }

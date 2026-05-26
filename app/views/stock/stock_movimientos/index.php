@@ -2,7 +2,7 @@
 // app/views/stock/stock_movimientos/index.php
 
 $titulo = "Ingreso / Egreso (Stock)";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/stock_movimientos.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/stock_movimientos.css">';
 
 require_once __DIR__ . '/../../../config/seguridad.php';
 require_once __DIR__ . '/../../../config/database.php';
@@ -92,7 +92,6 @@ function h($str) {
 }
 
 // Para links (ajustá si tu carpeta raíz cambia)
-$BASE = "/TYPSISTEMA";
 
 // ---------------------------
 // Render con layout
@@ -103,7 +102,7 @@ ob_start();
 <h1>Ingreso / Egreso (Stock)</h1>
 
 <p>
-  <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/nuevo.php" class="btn-primary">Nuevo movimiento</a>
+  <a href="<?= BASE_URL ?>app/views/stock/stock_movimientos/nuevo.php" class="btn-primary">Nuevo movimiento</a>
 </p>
 
 <?php if ($ok === 1): ?>
@@ -131,7 +130,7 @@ ob_start();
 
   <button type="submit" class="btn-primary">Filtrar</button>
 
-  <a href="<?= $BASE ?>/app/views/stock/stock_movimientos/index.php" class="btn-link">Limpiar</a>
+  <a href="<?= BASE_URL ?>app/views/stock/stock_movimientos/index.php" class="btn-link">Limpiar</a>
 </form>
 
 <hr>

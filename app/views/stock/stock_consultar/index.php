@@ -2,7 +2,7 @@
 // app/views/stock/stock_consultar/index.php
 
 $titulo    = "Consultar stock";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/stock.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/stock.css">';
 
 require_once __DIR__ . '/../../../config/seguridad.php';
 require_once __DIR__ . '/../../../config/database.php';
@@ -148,7 +148,7 @@ ob_start();
     </select>
 
     <button type="submit" class="btn-primary">Aplicar</button>
-    <a href="/TYPSISTEMA/app/views/stock/stock_consultar/index.php" class="btn-link">Limpiar</a>
+    <a href="<?= BASE_URL ?>app/views/stock/stock_consultar/index.php" class="btn-link">Limpiar</a>
 </form>
 
 <table class="stock-table">

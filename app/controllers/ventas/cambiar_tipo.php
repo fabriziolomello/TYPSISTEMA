@@ -10,7 +10,7 @@ $db   = new Database();
 $conn = $db->getConnection();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$returnUrl = $_GET['return'] ?? '/TYPSISTEMA/app/views/dashboard/index.php';
+$returnUrl = $_GET['return'] ?? '<?= BASE_URL ?>app/views/dashboard/index.php';
 
 if ($id <= 0) {
     header("Location: {$returnUrl}");

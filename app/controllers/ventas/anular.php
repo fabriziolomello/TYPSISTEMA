@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
 
 if (($_SESSION['usuario_rol'] ?? '') !== 'ADMIN') {
-    header('Location: /TYPSISTEMA/app/views/dashboard/index.php');
+    header('Location: ' . BASE_URL . 'app/views/dashboard/index.php');
     exit;
 }
 
@@ -81,7 +81,7 @@ try {
     $conn->commit();
 
     // 6) Volver al dashboard
-    header("Location: /TYPSISTEMA/app/views/dashboard/index.php");
+    header("Location: ' . BASE_URL . 'app/views/dashboard/index.php");
     exit;
 
 } catch (Throwable $e) {

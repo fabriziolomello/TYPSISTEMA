@@ -2,7 +2,7 @@
 // app/views/stock/transferencia/index.php
 
 $titulo    = "Transferencia de stock";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/stock_movimientos.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/stock_movimientos.css">';
 
 require_once __DIR__ . '/../../../config/seguridad.php';
 require_once __DIR__ . '/../../../config/database.php';
@@ -36,7 +36,6 @@ $variantes = $conn->query("
 ")->fetch_all(MYSQLI_ASSOC);
 
 $hoy  = date('Y-m-d');
-$BASE = "/TYPSISTEMA";
 
 // Mapa id -> nombre de depósito
 $depMap = array_column($depositos, 'nombre', 'id');
@@ -178,7 +177,7 @@ ob_start();
     </div>
 
     <div class="mov-acciones">
-        <a href="<?= $BASE ?>/app/views/stock/stock_consultar/index.php" class="btn-link">Cancelar</a>
+        <a href="<?= BASE_URL ?>app/views/stock/stock_consultar/index.php" class="btn-link">Cancelar</a>
         <button type="button" class="btn-primary" id="mov-guardar" disabled>Transferir</button>
     </div>
 
@@ -366,7 +365,7 @@ document.getElementById('mov-guardar').addEventListener('click', () => {
 
     const payload = { fecha, observaciones, id_origen: idOrigen, id_destino: idDestino, items };
 
-    fetch('/TYPSISTEMA/app/controllers/stock/transferencia/guardar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/stock/transferencia/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

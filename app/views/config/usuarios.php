@@ -2,14 +2,14 @@
 // app/views/config/usuarios.php
 
 $titulo    = "Usuarios y permisos";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/usuarios.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/usuarios.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
 
 // Solo admin
 if (($_SESSION['usuario_rol'] ?? '') !== 'ADMIN') {
-    header('Location: /TYPSISTEMA/app/views/dashboard.php');
+    header('Location: ' . BASE_URL . 'app/views/dashboard.php');
     exit;
 }
 
@@ -164,7 +164,7 @@ document.getElementById('usr-guardar').addEventListener('click', () => {
     if (!nombre) { alert('El nombre es obligatorio.'); return; }
     if (!id && !password) { alert('La contraseña es obligatoria para nuevos usuarios.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/config/usuarios/guardar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/config/usuarios/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, nombre, password, rol, id_deposito })

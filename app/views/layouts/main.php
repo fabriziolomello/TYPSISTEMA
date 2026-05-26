@@ -9,8 +9,8 @@ require_once __DIR__ . '/../../config/seguridad.php';
     <title><?= htmlspecialchars($titulo ?? 'Sistema TyP') ?></title>
 
     <!-- CSS general -->
-    <link rel="stylesheet" href="/TYPSISTEMA/public/css/reset.css">
-    <link rel="stylesheet" href="/TYPSISTEMA/public/css/layout.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>public/css/reset.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>public/css/layout.css">
 
     <!-- CSS específico de cada vista -->
     <?= $css_extra ?? '' ?>
@@ -34,8 +34,10 @@ require_once __DIR__ . '/../../config/seguridad.php';
     <!-- FOOTER -->
     <?php require __DIR__ . '/../partials/footer.php'; ?>
 
+    <!-- BASE_URL global para JS -->
+    <script>const BASE_URL = '<?= BASE_URL ?>';</script>
     <!-- JS menú -->
-    <script defer src="/TYPSISTEMA/public/js/menu.js"></script>
+    <script defer src="<?= BASE_URL ?>public/js/menu.js"></script>
 
     <!-- JS específico de cada vista -->
     <?= $js_extra ?? '' ?>

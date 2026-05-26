@@ -2,7 +2,7 @@
 // app/views/base_datos/lista_precios.php
 
 $titulo   = "Lista de precios";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/lista_precios.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/lista_precios.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -103,7 +103,7 @@ ob_start();
             </select>
         </div>
         <button type="submit" class="btn-primary">Filtrar</button>
-        <a href="/TYPSISTEMA/app/views/base_datos/lista_precios.php" class="btn-link">Limpiar</a>
+        <a href="<?= BASE_URL ?>app/views/base_datos/lista_precios.php" class="btn-link">Limpiar</a>
     </form>
 
     <!-- Aumento masivo -->
@@ -198,7 +198,7 @@ document.querySelectorAll('.btn-guardar-precio').forEach(btn => {
         btn.textContent = '...';
         btn.disabled    = true;
 
-        fetch('/TYPSISTEMA/app/controllers/base_datos/lista_precios/guardar.php', {
+        fetch('<?= BASE_URL ?>app/controllers/base_datos/lista_precios/guardar.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_producto: idProd, id_min: idMin, id_may: idMay, minorista, mayorista })
@@ -251,7 +251,7 @@ document.getElementById('btn-aumento').addEventListener('click', () => {
         const mayorista = parseFloat(fila.querySelector('.lp-input-may').value) || 0;
 
         promesas.push(
-            fetch('/TYPSISTEMA/app/controllers/base_datos/lista_precios/guardar.php', {
+            fetch('<?= BASE_URL ?>app/controllers/base_datos/lista_precios/guardar.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_producto: idProd, id_min: idMin, id_may: idMay, minorista, mayorista })

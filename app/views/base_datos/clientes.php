@@ -2,7 +2,7 @@
 // app/views/base_datos/clientes.php
 
 $titulo   = "Clientes";
-$css_extra = '<link rel="stylesheet" href="/TYPSISTEMA/public/css/clientes.css">';
+$css_extra = '<link rel="stylesheet" href="' . BASE_URL . 'public/css/clientes.css">';
 
 require_once __DIR__ . '/../../config/seguridad.php';
 require_once __DIR__ . '/../../config/database.php';
@@ -53,7 +53,7 @@ ob_start();
     <form method="get" class="cli-filtros">
         <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Buscar por nombre o CUIT...">
         <button type="submit" class="btn-primary">Filtrar</button>
-        <a href="/TYPSISTEMA/app/views/base_datos/clientes.php" class="btn-link">Limpiar</a>
+        <a href="<?= BASE_URL ?>app/views/base_datos/clientes.php" class="btn-link">Limpiar</a>
     </form>
 
     <!-- Tabla -->
@@ -259,7 +259,7 @@ document.getElementById('cli-guardar').addEventListener('click', () => {
 
     if (!nombre) { alert('El nombre es obligatorio.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/clientes/guardar.php', {
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/clientes/guardar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, nombre, cuit, telefono, email })
@@ -302,7 +302,7 @@ document.querySelectorAll('.btn-ver-compras').forEach(btn => {
 });
 
 function cargarCompras(idCliente) {
-    fetch('/TYPSISTEMA/app/controllers/base_datos/clientes/compras.php?id=' + idCliente)
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/clientes/compras.php?id=' + idCliente)
         .then(r => r.json())
         .then(data => {
             const body = document.getElementById('modal-compras-body');
@@ -391,7 +391,7 @@ function abrirModalDetalle(idVenta, idCliente, total, cobrado, estado) {
     body.innerHTML = '<p style="color:#888">Cargando...</p>';
     modalDetalle.classList.add('modal-overlay--visible');
 
-    fetch(`/TYPSISTEMA/app/controllers/base_datos/clientes/detalle_venta.php?id_venta=${idVenta}&id_cliente=${idCliente}`)
+    fetch(`<?= BASE_URL ?>app/controllers/base_datos/clientes/detalle_venta.php?id_venta=${idVenta}&id_cliente=${idCliente}`)
         .then(r => r.json())
         .then(data => {
             if (!data.success) { body.innerHTML = '<p style="color:red">Error: ' + data.error + '</p>'; return; }
@@ -446,7 +446,7 @@ document.getElementById('pago-guardar').addEventListener('click', () => {
     if (monto <= 0)        { alert('Ingresá un monto mayor a 0.'); return; }
     if (monto > maxSaldo)  { alert('El monto no puede superar el saldo pendiente.'); return; }
 
-    fetch('/TYPSISTEMA/app/controllers/base_datos/clientes/pago.php', {
+    fetch('<?= BASE_URL ?>app/controllers/base_datos/clientes/pago.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_venta: idVenta, monto, medio_pago: medio, id_cliente: idCliente })
