@@ -76,7 +76,11 @@ ob_start();
                 <tbody>
                     <tr>
                         <td>Efectivo</td>
-                        <td>$<?= number_format($saldoEfectivo, 2, ',', '.') ?></td>
+                        <td>
+                            <input type="number" id="saldo-efectivo" min="0" step="0.01"
+                                value="<?= number_format($saldoEfectivo, 2, '.', '') ?>"
+                                style="width:130px;padding:5px 8px;border:1px solid #ccc;border-radius:4px;font-size:14px;">
+                        </td>
                     </tr>
                     <tr>
                         <td>Tarjeta</td>
@@ -111,7 +115,7 @@ ob_start();
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    saldo_inicial: <?= $saldoEfectivo ?>,
+                    saldo_inicial: parseFloat(document.getElementById('saldo-efectivo').value) || 0,
                     observaciones: document.getElementById('caja-obs').value
                 })
             })
