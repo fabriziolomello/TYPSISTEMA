@@ -5,6 +5,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../../config/seguridad.php';
 require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../tiendanube/api.php';
 
 try {
     $raw  = file_get_contents('php://input');
@@ -18,6 +19,20 @@ try {
 
     $db   = new Database();
     $conn = $db->getConnection();
+
+    // Si se desactiva, eliminar de TiendaNube si está publicado
+    if ($activo === 0) {
+        $row = $conn->query("SELECT tn_product_id FROM tiendanube_producto WHERE id_producto = $id LIMIT 1")->fetch_assoc();
+        if ($row) {
+            try {
+                $config = tn_get_config($conn);
+                tn_request('DELETE', "products/{$row['tn_product_id']}", [], $config);
+            } catch (Throwable $ignored) {}
+
+            $conn->query("DELETE FROM tiendanube_variante WHERE tn_product_id = {$row['tn_product_id']}");
+            $conn->query("DELETE FROM tiendanube_producto WHERE id_producto = $id");
+        }
+    }
 
     $stmt = $conn->prepare("UPDATE productos SET activo = ? WHERE id = ?");
     $stmt->bind_param('ii', $activo, $id);

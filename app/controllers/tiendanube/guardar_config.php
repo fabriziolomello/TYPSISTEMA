@@ -24,7 +24,7 @@ try {
     $db   = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare("UPDATE tiendanube_config SET store_id = ?, access_token = ?, id_deposito = ? WHERE id = 1");
+    $stmt = $conn->prepare("INSERT INTO tiendanube_config (id, store_id, access_token, id_deposito) VALUES (1, ?, ?, ?) ON DUPLICATE KEY UPDATE store_id = VALUES(store_id), access_token = VALUES(access_token), id_deposito = VALUES(id_deposito)");
     $stmt->bind_param('ssi', $storeId, $accessToken, $idDeposito);
     $stmt->execute();
     $stmt->close();

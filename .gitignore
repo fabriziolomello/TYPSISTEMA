@@ -1,0 +1,5 @@
+app/config/database.php
+.DS_Store
+app/.DS_Store
+app/controllers/.DS_Store
+app/controllers/base_datos/.DS_Store

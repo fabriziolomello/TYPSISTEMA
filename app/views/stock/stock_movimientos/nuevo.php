@@ -90,8 +90,6 @@ ob_start();
                 <select id="mov-tipo">
                     <option value="INGRESO">Ingreso</option>
                     <option value="EGRESO">Egreso</option>
-                    <option value="AJUSTE_POSITIVO">Ajuste +</option>
-                    <option value="AJUSTE_NEGATIVO">Ajuste -</option>
                 </select>
             </div>
             <div class="mov-field mov-field--cant">

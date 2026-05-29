@@ -18,7 +18,7 @@ $tipo  = isset($_GET['tipo']) ? trim($_GET['tipo']) : '';
 $desde = isset($_GET['desde']) ? trim($_GET['desde']) : '';
 $hasta = isset($_GET['hasta']) ? trim($_GET['hasta']) : '';
 
-$tiposPermitidos = ['INGRESO', 'AJUSTE_POSITIVO', 'AJUSTE_NEGATIVO'];
+$tiposPermitidos = ['INGRESO', 'EGRESO'];
 if ($tipo !== '' && !in_array($tipo, $tiposPermitidos, true)) {
     $tipo = '';
 }
@@ -119,8 +119,7 @@ ob_start();
   <select name="tipo">
     <option value="" <?= $tipo === '' ? 'selected' : '' ?>>Todos</option>
     <option value="INGRESO" <?= $tipo === 'INGRESO' ? 'selected' : '' ?>>Ingreso</option>
-    <option value="AJUSTE_POSITIVO" <?= $tipo === 'AJUSTE_POSITIVO' ? 'selected' : '' ?>>Ajuste +</option>
-    <option value="AJUSTE_NEGATIVO" <?= $tipo === 'AJUSTE_NEGATIVO' ? 'selected' : '' ?>>Ajuste -</option>
+    <option value="EGRESO"  <?= $tipo === 'EGRESO'  ? 'selected' : '' ?>>Egreso</option>
   </select>
 
   <label>Desde:</label>
