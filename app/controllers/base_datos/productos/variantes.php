@@ -16,7 +16,7 @@ try {
     $stmt = $conn->prepare("
         SELECT id, nombre_variante, color, talle, codigo_barras, stock_actual, activo
         FROM producto_variante
-        WHERE id_producto = ?
+        WHERE id_producto = ? AND activo = 1
         ORDER BY id ASC
     ");
     $stmt->bind_param('i', $id);

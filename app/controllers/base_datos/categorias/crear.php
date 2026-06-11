@@ -10,19 +10,25 @@ try {
     $raw  = file_get_contents('php://input');
     $data = json_decode($raw, true);
 
-    $tipo   = $data['tipo']   ?? '';
-    $nombre = trim($data['nombre'] ?? '');
+    $tipo        = $data['tipo']        ?? '';
+    $nombre      = trim($data['nombre'] ?? '');
+    $idCategoria = isset($data['id_categoria']) && $data['id_categoria'] !== '' && $data['id_categoria'] !== null
+        ? (int)$data['id_categoria'] : null;
 
     if (!$nombre) throw new Exception('El nombre es obligatorio');
     if (!in_array($tipo, ['categoria', 'subcategoria'], true)) throw new Exception('Tipo inválido');
 
-    $tabla = $tipo === 'categoria' ? 'categoria' : 'subcategoria';
-
     $db   = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare("INSERT INTO $tabla (nombre) VALUES (?)");
-    $stmt->bind_param('s', $nombre);
+    if ($tipo === 'subcategoria' && $idCategoria) {
+        $stmt = $conn->prepare("INSERT INTO subcategoria (nombre, id_categoria) VALUES (?, ?)");
+        $stmt->bind_param('si', $nombre, $idCategoria);
+    } else {
+        $tabla = $tipo === 'categoria' ? 'categoria' : 'subcategoria';
+        $stmt  = $conn->prepare("INSERT INTO $tabla (nombre) VALUES (?)");
+        $stmt->bind_param('s', $nombre);
+    }
     $stmt->execute();
     $id = $conn->insert_id;
     $stmt->close();

@@ -94,7 +94,7 @@ try {
                 try {
                     tn_request('PUT',
                         "products/{$tnProductId}/variants/{$vm['tn_variant_id']}",
-                        ['stock' => (int)$lv['stock'], 'price' => $precio],
+                        ['stock' => max(0, (int)$lv['stock']), 'price' => $precio],
                         $config
                     );
                     $sincronizados++;
@@ -107,12 +107,12 @@ try {
             foreach ($variantesLocales as $lv) {
                 if (isset($mapeadasPorLocal[$lv['id']])) continue;
                 try {
-                    $tnVar = ['price' => $precio, 'stock' => (int)$lv['stock']];
+                    $tnVar = ['price' => $precio, 'stock' => max(0, (int)$lv['stock'])];
                     if ($lv['codigo_barras']) $tnVar['sku'] = $lv['codigo_barras'];
                     if ($tieneAtributos) {
                         $values = [];
-                        if ($usaColor) $values[] = ['es' => $lv['color'] ?? ''];
-                        if ($usaTalle) $values[] = ['es' => $lv['talle'] ?? ''];
+                        if ($usaColor) $values[] = ['es' => !empty($lv['color']) ? $lv['color'] : 'Único'];
+                        if ($usaTalle) $values[] = ['es' => !empty($lv['talle']) ? $lv['talle'] : 'Único'];
                         $tnVar['values'] = $values;
                     }
                     $nueva   = tn_request('POST', "products/{$tnProductId}/variants", $tnVar, $config);

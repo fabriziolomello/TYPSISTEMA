@@ -107,9 +107,6 @@ ob_start();
             <button type="button" class="btn-primary" id="btn-publicar-todo" <?= !$configurado ? 'disabled title="Configurá la conexión primero"' : '' ?>>
                 Productos sin publicar (<?= $totalSinPublicar ?>)
             </button>
-            <button type="button" class="btn-link" id="btn-sincronizar" <?= !$configurado ? 'disabled title="Configurá la conexión primero"' : '' ?>>
-                Sincronizar stock y precios
-            </button>
         </div>
     </div>
 
@@ -117,6 +114,12 @@ ob_start();
     <div id="tn-progress" style="display:none;" class="tn-progress-wrap">
         <div class="tn-progress-bar"><div class="tn-progress-fill" id="tn-progress-fill"></div></div>
         <span id="tn-progress-msg">Procesando...</span>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div style="margin-bottom:12px;">
+        <input type="text" id="tn-buscador" placeholder="Buscar producto..." autocomplete="off"
+               style="width:100%;max-width:400px;padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
     </div>
 
     <!-- TABLA -->
@@ -150,11 +153,16 @@ ob_start();
                         <td style="color:#888;font-size:13px;">
                             <?= $p['sincronizado_at'] ? date('d/m/Y H:i', strtotime($p['sincronizado_at'])) : '-' ?>
                         </td>
-                        <td style="text-align:center;">
+                        <td style="text-align:center;display:flex;gap:8px;align-items:center;justify-content:center;">
                             <label class="tn-toggle" title="<?= $p['sincronizar_tn'] ? 'Desactivar sincronización' : 'Activar sincronización' ?>">
                                 <input type="checkbox" class="tn-toggle-input" data-id="<?= $p['id'] ?>" <?= $p['sincronizar_tn'] ? 'checked' : '' ?>>
                                 <span class="tn-toggle-slider"></span>
                             </label>
+                            <?php if ($p['tn_product_id']): ?>
+                            <button type="button" class="btn-republicar" data-id="<?= $p['id'] ?>" title="Borrar de TN y volver a publicar con datos actuales" style="font-size:12px;padding:2px 8px;cursor:pointer;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;white-space:nowrap;">
+                                Republicar
+                            </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -164,6 +172,15 @@ ob_start();
 </div>
 
 <script>
+// Buscador
+document.getElementById('tn-buscador').addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.tn-tabla tbody tr').forEach(tr => {
+        const nombre = tr.querySelector('td')?.textContent.toLowerCase() ?? '';
+        tr.style.display = nombre.includes(q) ? '' : 'none';
+    });
+});
+
 // Toggle sincronizar_tn
 document.querySelectorAll('.tn-toggle-input').forEach(cb => {
     cb.addEventListener('change', function() {
@@ -213,49 +230,98 @@ document.getElementById('tn-guardar-config')?.addEventListener('click', () => {
     });
 });
 
-// Publicar todo
-document.getElementById('btn-publicar-todo')?.addEventListener('click', () => {
+// Publicar todo (en lotes automáticos)
+document.getElementById('btn-publicar-todo')?.addEventListener('click', async () => {
     if (!confirm('¿Publicar todos los productos sin publicar en Tienda Nube?')) return;
-    ejecutarAccion('<?= BASE_URL ?>app/controllers/tiendanube/publicar.php', 'Publicando productos...');
-});
 
-// Sincronizar
-document.getElementById('btn-sincronizar')?.addEventListener('click', () => {
-    if (!confirm('¿Actualizar stock, precios y variantes en Tienda Nube?')) return;
-    ejecutarAccion('<?= BASE_URL ?>app/controllers/tiendanube/sincronizar.php', 'Sincronizando...');
-});
-
-function ejecutarAccion(url, msgInicio) {
     const progress = document.getElementById('tn-progress');
     const fill     = document.getElementById('tn-progress-fill');
     const msg      = document.getElementById('tn-progress-msg');
+    const btnPub   = document.getElementById('btn-publicar-todo');
 
     progress.style.display = '';
-    fill.style.width = '30%';
-    msg.textContent  = msgInicio;
+    fill.style.width = '5%';
+    msg.textContent  = 'Iniciando publicación...';
+    btnPub.disabled  = true;
 
-    document.getElementById('btn-publicar-todo').disabled = true;
-    document.getElementById('btn-sincronizar').disabled   = true;
+    const totalInicial = <?= $totalSinPublicar ?>;
+    let publicadosTotal = 0;
+    let erroresTotal    = [];
 
-    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-        .then(r => r.json())
-        .then(d => {
-            fill.style.width = '100%';
+    while (true) {
+        try {
+            const r = await fetch('<?= BASE_URL ?>app/controllers/tiendanube/publicar.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const d = await r.json();
+
             if (!d.success) {
                 msg.textContent = 'Error: ' + d.error;
-                return;
+                btnPub.disabled = false;
+                break;
             }
-            const cant = d.publicados ?? d.sincronizados ?? 0;
-            let resumen = `✅ ${cant} variante(s) actualizadas.`;
-            if (d.variantes_agregadas)  resumen += ` +${d.variantes_agregadas} agregadas.`;
-            if (d.variantes_eliminadas) resumen += ` -${d.variantes_eliminadas} eliminadas.`;
-            msg.textContent = resumen;
-            if (d.errores && d.errores.length) {
-                msg.textContent += ' Con errores: ' + d.errores.join(' | ');
+
+            publicadosTotal += d.publicados ?? 0;
+            if (d.errores) erroresTotal = erroresTotal.concat(d.errores);
+
+            // Si no se publicó nada en este lote pero hay más, evitar loop infinito
+            if ((d.publicados ?? 0) === 0 && d.hay_mas) {
+                fill.style.width = '100%';
+                msg.textContent = `⚠ No se pudo continuar. Quedan ${d.restantes} producto(s) con errores.`;
+                if (erroresTotal.length) msg.textContent += ' | ' + erroresTotal.join(' | ');
+                btnPub.disabled = false;
+                break;
             }
-            setTimeout(() => window.location.reload(), 2000);
-        });
-}
+
+            const restantes = d.restantes ?? 0;
+            const progreso  = totalInicial > 0
+                ? Math.round(((totalInicial - restantes) / totalInicial) * 100)
+                : 100;
+
+            fill.style.width = progreso + '%';
+            msg.textContent  = `Publicando... ${publicadosTotal} publicados, ${restantes} restantes`;
+
+            if (!d.hay_mas) {
+                fill.style.width = '100%';
+                let resumen = `✅ ${publicadosTotal} producto(s) publicados.`;
+                if (erroresTotal.length) resumen += ' Con errores: ' + erroresTotal.join(' | ');
+                msg.textContent = resumen;
+                setTimeout(() => window.location.reload(), 2000);
+                break;
+            }
+
+        } catch (e) {
+            msg.textContent = 'Error de red. Reintentando...';
+            await new Promise(r => setTimeout(r, 3000));
+        }
+    }
+});
+
+// Republicar producto individual
+document.querySelectorAll('.btn-republicar').forEach(btn => {
+    btn.addEventListener('click', async function () {
+        if (!confirm('¿Republicar este producto? Se borrará de Tienda Nube y se volverá a publicar con los datos actuales.')) return;
+        const id = parseInt(this.dataset.id);
+        this.disabled = true;
+        this.textContent = '...';
+        try {
+            const r = await fetch('<?= BASE_URL ?>app/controllers/tiendanube/republicar.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_producto: id })
+            });
+            const d = await r.json();
+            if (d.success) { window.location.reload(); }
+            else { alert('Error: ' + d.error); this.disabled = false; this.textContent = 'Republicar'; }
+        } catch (e) {
+            alert('Error de red.');
+            this.disabled = false;
+            this.textContent = 'Republicar';
+        }
+    });
+});
+
 </script>
 
 <?php

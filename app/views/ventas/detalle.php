@@ -3,6 +3,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
 
 $db   = new Database();
 $conn = $db->getConnection();
@@ -79,6 +81,8 @@ if ($resCobrado && $resCobrado->num_rows > 0) {
 
 $saldo = $venta['total'] - $totalCobrado;
 if ($saldo < 0) $saldo = 0;
+
+$totalDescuento = array_sum(array_column($items, 'descuento'));
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -192,6 +196,9 @@ if ($variante !== '' && mb_strtolower($variante, 'UTF-8') !== 'unica') {
     </table>
 
     <div class="venta-detalle__totales">
+      <?php if ($totalDescuento > 0): ?>
+      <p><strong>Descuento:</strong> -$<?= number_format($totalDescuento, 2, ',', '.') ?></p>
+      <?php endif; ?>
       <p><strong>Total venta:</strong> $<?= number_format($venta['total'], 2, ',', '.') ?></p>
       <p><strong>Total cobrado:</strong> $<?= number_format($totalCobrado, 2, ',', '.') ?></p>
       <p><strong>Saldo pendiente:</strong> $<?= number_format($saldo, 2, ',', '.') ?></p>

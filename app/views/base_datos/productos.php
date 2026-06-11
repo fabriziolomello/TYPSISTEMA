@@ -13,7 +13,7 @@ $conn = $db->getConnection();
 
 // Categorías y proveedores para filtros y modal
 $categorias    = $conn->query("SELECT id, nombre FROM categoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
-$subcategorias = $conn->query("SELECT id, nombre FROM subcategoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+$subcategorias = $conn->query("SELECT id, nombre, id_categoria FROM subcategoria ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
 $proveedores   = $conn->query("SELECT id, nombre FROM proveedor ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
 
 // Filtros
@@ -53,17 +53,14 @@ $sql = "
         c.nombre AS categoria,
         sc.nombre AS subcategoria,
         pr.nombre AS proveedor,
-        COALESCE(SUM(pv.stock_actual), 0) AS stock_total,
-        MAX(CASE WHEN lp.tipo_lista = 'MINORISTA' THEN lp.precio END) AS precio_minorista,
-        MAX(CASE WHEN lp.tipo_lista = 'MAYORISTA' THEN lp.precio END) AS precio_mayorista
+        COALESCE((SELECT SUM(pv.stock_actual) FROM producto_variante pv WHERE pv.id_producto = p.id), 0) AS stock_total,
+        (SELECT lp.precio FROM lista_precio lp WHERE lp.id_producto = p.id AND lp.tipo_lista = 'MINORISTA' LIMIT 1) AS precio_minorista,
+        (SELECT lp.precio FROM lista_precio lp WHERE lp.id_producto = p.id AND lp.tipo_lista = 'MAYORISTA' LIMIT 1) AS precio_mayorista
     FROM productos p
     LEFT JOIN categoria c ON c.id = p.id_categoria
     LEFT JOIN subcategoria sc ON sc.id = p.id_subcategoria
     LEFT JOIN proveedor pr ON pr.id = p.id_proveedor
-    LEFT JOIN producto_variante pv ON pv.id_producto = p.id
-    LEFT JOIN lista_precio lp ON lp.id_producto = p.id
     $where
-    GROUP BY p.id, p.nombre, p.codigo_barras, p.precio_costo, p.activo, p.id_categoria, p.id_subcategoria, p.id_proveedor, c.nombre, sc.nombre, pr.nombre
     ORDER BY p.nombre ASC
 ";
 
@@ -96,7 +93,7 @@ ob_start();
             <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Buscar por nombre o código...">
         </div>
         <div class="prod-field">
-            <select name="categoria">
+            <select name="categoria" id="filtro-categoria">
                 <option value="0">Todas las categorías</option>
                 <?php foreach ($categorias as $cat): ?>
                     <option value="<?= $cat['id'] ?>" <?= $idCat === (int)$cat['id'] ? 'selected' : '' ?>>
@@ -106,13 +103,15 @@ ob_start();
             </select>
         </div>
         <div class="prod-field">
-            <select name="subcategoria">
+            <select name="subcategoria" id="filtro-subcategoria">
                 <option value="0">Todas las sub categorías</option>
-                <?php foreach ($subcategorias as $sc): ?>
-                    <option value="<?= $sc['id'] ?>" <?= $idSubcat === (int)$sc['id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($sc['nombre']) ?>
-                    </option>
-                <?php endforeach; ?>
+                <?php if ($idSubcat > 0): ?>
+                    <?php foreach ($subcategorias as $sc): ?>
+                        <?php if ((int)$sc['id'] === $idSubcat): ?>
+                            <option value="<?= $sc['id'] ?>" selected><?= htmlspecialchars($sc['nombre']) ?></option>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
         </div>
         <div class="prod-field">
@@ -280,7 +279,7 @@ ob_start();
                             <select id="ep-subcategoria">
                                 <option value="">Sin sub categoría</option>
                                 <?php foreach ($subcategorias as $sc): ?>
-                                    <option value="<?= $sc['id'] ?>"><?= htmlspecialchars($sc['nombre']) ?></option>
+                                    <option value="<?= $sc['id'] ?>" data-categoria="<?= (int)($sc['id_categoria'] ?? 0) ?>"><?= htmlspecialchars($sc['nombre']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <button type="button" class="btn-add-opcion" data-tipo="subcategoria" data-target="ep-subcategoria" title="Nueva sub categoría">+</button>
@@ -370,7 +369,7 @@ ob_start();
                             <select id="np-subcategoria">
                                 <option value="">Sin sub categoría</option>
                                 <?php foreach ($subcategorias as $sc): ?>
-                                    <option value="<?= $sc['id'] ?>"><?= htmlspecialchars($sc['nombre']) ?></option>
+                                    <option value="<?= $sc['id'] ?>" data-categoria="<?= (int)($sc['id_categoria'] ?? 0) ?>"><?= htmlspecialchars($sc['nombre']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <button type="button" class="btn-add-opcion" data-tipo="subcategoria" data-target="np-subcategoria" title="Nueva sub categoría">+</button>
@@ -442,6 +441,9 @@ const btnCerrar = document.getElementById('modal-cerrar');
 const btnCancel = document.getElementById('modal-cancelar');
 
 function abrirModal() {
+    // Resetear categoría y limpiar subcategorías al abrir
+    document.getElementById('np-categoria').value = '';
+    cargarSubcategorias('', document.getElementById('np-subcategoria'), '');
     modalEl.classList.add('modal-overlay--visible');
     document.body.classList.add('modal-abierto');
 }
@@ -599,8 +601,8 @@ function abrirModalEditar(btn) {
     document.getElementById('ep-costo').value        = btn.dataset.costo;
     document.getElementById('ep-minorista').value    = btn.dataset.minorista;
     document.getElementById('ep-mayorista').value    = btn.dataset.mayorista;
-    document.getElementById('ep-categoria').value    = btn.dataset.categoria;
-    document.getElementById('ep-subcategoria').value = btn.dataset.subcategoria;
+    document.getElementById('ep-categoria').value = btn.dataset.categoria;
+    cargarSubcategorias(btn.dataset.categoria, document.getElementById('ep-subcategoria'), btn.dataset.subcategoria);
     document.getElementById('ep-proveedor').value    = btn.dataset.proveedor;
     document.getElementById('ep-activo').value       = btn.dataset.activo;
 
@@ -688,6 +690,48 @@ document.getElementById('ep-guardar').addEventListener('click', () => {
 });
 
 // =====================
+// Subcategorías por categoría (AJAX)
+// =====================
+function cargarSubcategorias(catId, selectSub, valorActual) {
+    while (selectSub.options.length > 1) selectSub.remove(1);
+    selectSub.value = selectSub.options[0].value; // reset a "Sin..." o "Todas..."
+
+    if (!catId || catId === '0') return;
+
+    fetch(BASE_URL + 'app/controllers/base_datos/categorias/subcategorias_por_categoria.php?id_categoria=' + catId)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            data.subcategorias.forEach(sc => {
+                const opt = document.createElement('option');
+                opt.value = sc.id;
+                opt.textContent = sc.nombre;
+                selectSub.appendChild(opt);
+            });
+            if (valorActual) selectSub.value = String(valorActual);
+        });
+}
+
+document.getElementById('np-categoria').addEventListener('change', function() {
+    cargarSubcategorias(this.value, document.getElementById('np-subcategoria'), '');
+});
+document.getElementById('ep-categoria').addEventListener('change', function() {
+    cargarSubcategorias(this.value, document.getElementById('ep-subcategoria'), '');
+});
+document.getElementById('filtro-categoria').addEventListener('change', function() {
+    cargarSubcategorias(this.value, document.getElementById('filtro-subcategoria'), '');
+});
+
+// Inicializar filtro del listado si hay categoría preseleccionada al cargar
+(function() {
+    const catId = document.getElementById('filtro-categoria').value;
+    const subId = '<?= $idSubcat ?>';
+    if (catId && catId !== '0') {
+        cargarSubcategorias(catId, document.getElementById('filtro-subcategoria'), subId);
+    }
+})();
+
+// =====================
 // Crear categoría / sub categoría
 // =====================
 document.querySelectorAll('.btn-add-opcion').forEach(btn => {
@@ -697,32 +741,48 @@ document.querySelectorAll('.btn-add-opcion').forEach(btn => {
         const nombre = prompt(`Nombre de la nueva ${label}:`);
         if (!nombre || !nombre.trim()) return;
 
+        // Para nueva subcategoría, capturar la categoría actualmente seleccionada en el modal
+        const targetId   = btn.dataset.target;
+        const modalPrefix = targetId.startsWith('np-') ? 'np' : 'ep';
+        const idCategoria = tipo === 'subcategoria'
+            ? (document.getElementById(modalPrefix + '-categoria')?.value || null)
+            : null;
+
         fetch('<?= BASE_URL ?>app/controllers/base_datos/categorias/crear.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tipo, nombre: nombre.trim() })
+            body: JSON.stringify({ tipo, nombre: nombre.trim(), id_categoria: idCategoria })
         })
         .then(r => r.json())
         .then(data => {
             if (!data.success) { alert('Error: ' + data.error); return; }
 
-            // Agregar la nueva opción a TODOS los selects del mismo tipo y seleccionarla en el clickeado
-            const selects = tipo === 'categoria'
-                ? ['np-categoria', 'ep-categoria']
-                : ['np-subcategoria', 'ep-subcategoria'];
-
-            selects.forEach(id => {
-                const sel = document.getElementById(id);
-                if (!sel) return;
-                const opt = document.createElement('option');
-                opt.value = data.id;
-                opt.textContent = data.nombre;
-                sel.appendChild(opt);
-                if (id === btn.dataset.target) sel.value = data.id;
-            });
+            if (tipo === 'categoria') {
+                // Agregar a ambos selects de categoría
+                ['np-categoria', 'ep-categoria'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    if (!sel) return;
+                    const opt = document.createElement('option');
+                    opt.value = data.id;
+                    opt.textContent = data.nombre;
+                    sel.appendChild(opt);
+                    if (id === btn.dataset.target) sel.value = data.id;
+                });
+            } else {
+                // Subcategoría: agregar al select destino y seleccionarla
+                const sel = document.getElementById(btn.dataset.target);
+                if (sel) {
+                    const opt = document.createElement('option');
+                    opt.value = data.id;
+                    opt.textContent = data.nombre;
+                    sel.appendChild(opt);
+                    sel.value = data.id;
+                }
+            }
         });
     });
 });
+
 
 // =====================
 // Desactivar / Activar

@@ -43,6 +43,15 @@ try {
 
     $stmt->close();
 
+    // Sincronizar precio en TiendaNube si el producto está publicado (silencioso)
+    try {
+        require_once __DIR__ . '/../../tiendanube/api.php';
+        $tnConfig = $conn->query("SELECT store_id, access_token, id_deposito FROM tiendanube_config LIMIT 1")->fetch_assoc();
+        if ($tnConfig && $tnConfig['store_id']) {
+            tn_sincronizar_producto($conn, $tnConfig, $idProducto);
+        }
+    } catch (Throwable $ignored) {}
+
     echo json_encode(['success' => true]);
 
 } catch (Throwable $e) {

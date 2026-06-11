@@ -3,6 +3,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/../../config/seguridad.php';
+require_once __DIR__ . '/../../config/database.php';
 
 if (!isset($_GET['id'])) {
     die("ID de venta inválido.");
@@ -47,6 +49,7 @@ $sqlItems = "
     SELECT
         dv.cantidad,
         dv.precio_unitario,
+        dv.descuento,
         dv.subtotal,
         p.nombre        AS nombre_producto,
         pv.nombre_variante
@@ -73,13 +76,16 @@ while ($row = $resultItems->fetch_assoc()) {
     }
 
     $items[] = [
-        'producto' => $nombreProducto,
-        'cantidad' => $row['cantidad'],
-        'precio'   => $row['precio_unitario'],
-        'subtotal' => $row['subtotal'],
+        'producto'  => $nombreProducto,
+        'cantidad'  => $row['cantidad'],
+        'precio'    => $row['precio_unitario'],
+        'descuento' => $row['descuento'],
+        'subtotal'  => $row['subtotal'],
     ];
 }
 $stmtItems->close();
+
+$total_descuento = array_sum(array_column($items, 'descuento'));
 
 // ------------------------------
 // 3) Cobros (movimiento_caja)
@@ -238,6 +244,9 @@ $saldo_pendiente = (float)$venta['total'] - $total_cobrado;
     </table>
 
     <div class="totales">
+      <?php if ($total_descuento > 0): ?>
+      <div><strong>Descuento:</strong> -$<?= number_format($total_descuento, 2, ',', '.') ?></div>
+      <?php endif; ?>
       <div><strong>Total venta:</strong> $<?= number_format($venta['total'], 2, ',', '.') ?></div>
       <div><strong>Total cobrado:</strong> $<?= number_format($total_cobrado, 2, ',', '.') ?></div>
       <div><strong>Saldo pendiente:</strong> $<?= number_format($saldo_pendiente, 2, ',', '.') ?></div>

@@ -128,6 +128,7 @@
    ============================== */
 .app-main {
     flex: 1;
+    min-width: 0;
     margin-left: 0;
     padding: 20px;
     transition: margin-left 0.3s ease;

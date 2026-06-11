@@ -89,7 +89,28 @@ try {
         $stmtInsVar->close();
     }
 
+    // Desactivar variantes que el usuario eliminó del modal (no están en el payload)
+    $idsMantenidos = array_values(array_filter(
+        array_map(fn($v) => (int)($v['id'] ?? 0), $variantes),
+        fn($vid) => $vid > 0
+    ));
+    if (!empty($idsMantenidos)) {
+        $placeholders = implode(',', $idsMantenidos);
+        $conn->query("UPDATE producto_variante SET activo = 0 WHERE id_producto = $id AND id NOT IN ($placeholders) AND activo = 1");
+    } else {
+        $conn->query("UPDATE producto_variante SET activo = 0 WHERE id_producto = $id AND activo = 1");
+    }
+
     $conn->commit();
+
+    // Sincronizar con TiendaNube: precio, stock, variantes nuevas/eliminadas (silencioso)
+    try {
+        require_once __DIR__ . '/../../tiendanube/api.php';
+        $tnConfig = $conn->query("SELECT store_id, access_token, id_deposito FROM tiendanube_config LIMIT 1")->fetch_assoc();
+        if ($tnConfig && $tnConfig['store_id']) {
+            tn_sincronizar_producto($conn, $tnConfig, $id);
+        }
+    } catch (Throwable $ignored) {}
 
     echo json_encode(['success' => true]);
 

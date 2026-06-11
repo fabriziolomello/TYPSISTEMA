@@ -1,6 +1,6 @@
 <?php
 // app/controllers/tiendanube/publicar.php
-// Publica en TN los productos del sistema que aún no fueron publicados
+// Publica en TN los productos del sistema que aún no fueron publicados (en lotes)
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -21,12 +21,27 @@ try {
 
     $config     = tn_get_config($conn);
     $idDeposito = (int)$config['id_deposito'];
+    $lote       = 20;
 
-    // Productos activos que NO están en tiendanube_producto
+    // Cuántos quedan pendientes en total
+    $restantes = (int)$conn->query("
+        SELECT COUNT(*) FROM productos
+        WHERE activo = 1 AND sincronizar_tn = 1
+          AND id NOT IN (SELECT id_producto FROM tiendanube_producto)
+    ")->fetch_row()[0];
+
+    if ($restantes === 0) {
+        echo json_encode(['success' => true, 'publicados' => 0, 'restantes' => 0, 'hay_mas' => false]);
+        exit;
+    }
+
+    // Solo el lote actual
     $productos = $conn->query("
         SELECT
             p.id,
             p.nombre,
+            p.codigo_barras,
+            p.stock_actual,
             p.precio_costo,
             MAX(CASE WHEN lp.tipo_lista = 'MINORISTA' THEN lp.precio END) AS precio_minorista
         FROM productos p
@@ -34,14 +49,10 @@ try {
         WHERE p.activo = 1
           AND p.sincronizar_tn = 1
           AND p.id NOT IN (SELECT id_producto FROM tiendanube_producto)
-        GROUP BY p.id, p.nombre, p.precio_costo
+        GROUP BY p.id, p.nombre, p.codigo_barras, p.stock_actual, p.precio_costo
         ORDER BY p.nombre ASC
+        LIMIT $lote
     ")->fetch_all(MYSQLI_ASSOC);
-
-    if (empty($productos)) {
-        echo json_encode(['success' => true, 'mensaje' => 'Todos los productos ya están publicados.', 'publicados' => 0]);
-        exit;
-    }
 
     $stmtVariantes = $conn->prepare("
         SELECT pv.id, pv.nombre_variante, pv.color, pv.talle,
@@ -65,35 +76,45 @@ try {
             $stmtVariantes->execute();
             $variantes = $stmtVariantes->get_result()->fetch_all(MYSQLI_ASSOC);
 
-            if (empty($variantes)) continue;
+            // Sin variantes en BD: publicar como producto de variante única
+            if (empty($variantes)) {
+                $variantes = [[
+                    'id'    => 0,
+                    'sku'   => $prod['codigo_barras'] ?? null,
+                    'stock' => (int)($prod['stock_actual'] ?? 0),
+                    'color' => null,
+                    'talle' => null,
+                ]];
+            }
 
             $precio = (float)($prod['precio_minorista'] ?? 0);
 
-            // Detectar qué atributos usa este producto
             $usaColor = !empty(array_filter(array_column($variantes, 'color')));
             $usaTalle = !empty(array_filter(array_column($variantes, 'talle')));
             $tieneVariantesReales = $usaColor || $usaTalle;
+
+            // Si múltiples variantes comparten el mismo SKU (heredado del producto), no enviar SKU
+            // para evitar 422 por duplicado en TiendaNube
+            $todosSkus     = array_filter(array_column($variantes, 'sku'));
+            $skuDuplicado  = count($todosSkus) > 1 && count($todosSkus) !== count(array_unique($todosSkus));
 
             $tnVariantes = [];
             foreach ($variantes as $v) {
                 $tnVar = [
                     'price' => number_format($precio, 2, '.', ''),
-                    'stock' => (int)$v['stock'],
+                    'stock' => max(0, (int)$v['stock']),
                 ];
-                if ($v['sku']) $tnVar['sku'] = $v['sku'];
+                if ($v['sku'] && !$skuDuplicado) $tnVar['sku'] = $v['sku'];
                 if ($tieneVariantesReales) {
                     $values = [];
-                    if ($usaColor) $values[] = ['es' => $v['color'] ?? ''];
-                    if ($usaTalle) $values[] = ['es' => $v['talle'] ?? ''];
+                    if ($usaColor) $values[] = ['es' => !empty($v['color']) ? $v['color'] : 'Único'];
+                    if ($usaTalle) $values[] = ['es' => !empty($v['talle']) ? $v['talle'] : 'Único'];
                     $tnVar['values'] = $values;
                 }
                 $tnVariantes[] = $tnVar;
             }
 
-            $body = [
-                'name'     => ['es' => $prod['nombre']],
-                'variants' => $tnVariantes,
-            ];
+            $body = ['name' => ['es' => $prod['nombre']], 'variants' => $tnVariantes];
 
             if ($tieneVariantesReales) {
                 $attrs = [];
@@ -102,13 +123,12 @@ try {
                 $body['attributes'] = $attrs;
             }
 
-            $tnProd = tn_request('POST', 'products', $body, $config);
+            $tnProd      = tn_request('POST', 'products', $body, $config);
             $tnProductId = (int)$tnProd['id'];
 
             $stmtProd->bind_param('ii', $prod['id'], $tnProductId);
             $stmtProd->execute();
 
-            // Mapear variantes del sistema con variantes de TN
             $tnVars = $tnProd['variants'] ?? [];
             foreach ($variantes as $i => $v) {
                 $tnVarId = (int)($tnVars[$i]['id'] ?? 0);
@@ -129,10 +149,19 @@ try {
     $stmtProd->close();
     $stmtVar->close();
 
+    // Cuántos quedan después de este lote
+    $restantes = (int)$conn->query("
+        SELECT COUNT(*) FROM productos
+        WHERE activo = 1 AND sincronizar_tn = 1
+          AND id NOT IN (SELECT id_producto FROM tiendanube_producto)
+    ")->fetch_row()[0];
+
     echo json_encode([
-        'success'   => true,
+        'success'    => true,
         'publicados' => $publicados,
-        'errores'   => $errores,
+        'restantes'  => $restantes,
+        'hay_mas'    => $restantes > 0,
+        'errores'    => $errores,
     ]);
 
 } catch (Throwable $e) {
